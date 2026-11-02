@@ -1,0 +1,2 @@
+{"id": "q001", "category": "act_section", "difficulty": "easy", "question": "What is the maximum deduction allowed under section 80C of the Income-tax Act, 1961?", "expected_answer": "Rs 1,50,000 in aggregate (old regime).", "must_include": ["1,50,000"], "expected_sources": [{"act": "Income-tax Act, 1961", "section": "80C"}], "answerable": true}
+{"id": "q002", "category": "out_of_scope", "difficulty": "easy", "question": "What is the corporate tax rate in Singapore?", "expected_answer": null, "must_include": [], "expected_sources": [], "answerable": false}

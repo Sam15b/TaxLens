@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+.env
+.env.*
+var
+data/raw
+data/eval_corpus
+.models
+tests
+eval
+docs
+**/__pycache__

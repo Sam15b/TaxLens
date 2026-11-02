@@ -1,0 +1,25 @@
+# Values per Finance Act, 2025 — VERIFY against the official text before relying on them.
+tax_year: "2025-26"
+source: "Finance Act, 2025"
+cess_rate: 0.04
+regimes:
+  new:
+    standard_deduction_salaried: 75000
+    slabs:                      # [upper bound (null = no limit), rate]
+      - [400000, 0.00]
+      - [800000, 0.05]
+      - [1200000, 0.10]
+      - [1600000, 0.15]
+      - [2000000, 0.20]
+      - [2400000, 0.25]
+      - [null, 0.30]
+    rebate: { max_taxable_income: 1200000, max_rebate: 60000 }
+  old:
+    standard_deduction_salaried: 50000
+    slabs:
+      - [250000, 0.00]
+      - [500000, 0.05]
+      - [1000000, 0.20]
+      - [null, 0.30]
+    rebate: { max_taxable_income: 500000, max_rebate: 12500 }
+    deduction_caps: { "80C": 150000, "80D_self": 25000 }

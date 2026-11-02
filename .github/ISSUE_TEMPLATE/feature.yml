@@ -1,0 +1,34 @@
+name: Feature
+description: A unit of work for the sprint board
+labels: [feat]
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: User or business reason
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: Scope, and what is explicitly out of scope
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] ...
+        - [ ] Tests added
+        - [ ] Docs updated (if behaviour changed)
+        - [ ] Eval not regressed (if retrieval/prompt/LLM changed)
+    validations:
+      required: true
+  - type: dropdown
+    id: estimate
+    attributes:
+      label: Estimate (points)
+      options: ["1", "2", "3", "5", "8"]

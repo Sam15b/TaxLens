@@ -1,0 +1,35 @@
+# Starter pipeline: lint + tests. The eval gate, Docker build and deploy jobs are added in
+# week 4. The target pipeline is in docs/08-deployment-cicd.md § 8.4.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: ci
+      DB_BACKEND: sqlite
+      SQLITE_PATH: var/ci.db
+      PHOENIX_COLLECTOR_ENDPOINT: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      # switch to `uv sync --frozen` once uv.lock is committed
+      - run: uv sync
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy taxlens
+      - run: uv run pytest --cov=taxlens --cov-report=term

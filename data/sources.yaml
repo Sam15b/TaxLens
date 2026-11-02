@@ -1,0 +1,15 @@
+# Manifest of public source documents. Fill in real URLs from incometaxindia.gov.in,
+# indiacode.nic.in and cbic-gst.gov.in. sha256 is filled by: scripts/download_sources.py --update-hashes
+# See docs/03-local-setup.md § 3.7.
+- id: ita-2025
+  title: Income-tax Act, 2025
+  doc_type: act
+  act: Income-tax Act, 2025
+  url: TODO
+  sha256: null
+- id: ita-1961
+  title: Income-tax Act, 1961 (as amended)
+  doc_type: act
+  act: Income-tax Act, 1961
+  url: TODO
+  sha256: null

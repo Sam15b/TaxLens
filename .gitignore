@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Local data and models
+var/*
+!var/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/eval_corpus/*
+!data/eval_corpus/.gitkeep
+.models/
+*.db
+
+# Eval outputs
+eval/results*.json
+eval/summary.md
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

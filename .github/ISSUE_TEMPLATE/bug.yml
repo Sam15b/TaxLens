@@ -1,0 +1,25 @@
+name: Bug
+description: Something is wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Expected vs actual. Include the trace_id from the API response if there is one.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Use synthetic data only. Never paste real PAN, Aadhaar or client documents.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Regression test added
+        - [ ] Root cause noted in the PR

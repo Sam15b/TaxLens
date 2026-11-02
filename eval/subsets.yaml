@@ -1,0 +1,4 @@
+# Golden-set ids in the fast CI subset (~40). See docs/06-evaluation.md.
+ci:
+  - q001
+  - q002

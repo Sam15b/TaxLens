@@ -1,0 +1,50 @@
+[project]
+name = "taxlens"
+version = "0.1.0"
+description = "AI tax & legal document assistant for Indian tax law: cited answers, document review, PII masking."
+readme = "README.md"
+requires-python = ">=3.12"
+# Start small. Each sprint adds what it needs (see docs/03-local-setup.md for the full list):
+#   week 1: llama-index-core, llama-index-readers-file, pymupdf, fastembed, pinecone, sqlalchemy, alembic, langgraph, ...
+#   week 3: presidio-analyzer, spacy, pyjwt, pwdlib[argon2], azure-storage-*, ...
+#   week 4: azure-cosmos, azure-identity, ...
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic-settings>=2.6",
+    "httpx>=0.28",
+    "pyyaml>=6.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "types-PyYAML>=6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["docs"]          # code snippets in docs are illustrative, not linted
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC"]   # S = bandit security rules
+ignore = ["S101"]                                     # allow assert in tests
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+strict_optional = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "integration: needs Azurite and a Pinecone API key (uses a throwaway namespace)",
+    "cosmos: needs the Cosmos DB emulator (docker compose --profile cosmos up -d)",
+    "eval: calls real LLMs; run only in the eval job",
+]
+addopts = "-m 'not eval and not integration and not cosmos' --import-mode=importlib"
