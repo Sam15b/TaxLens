@@ -27,6 +27,11 @@ mkdir taxlens, tests, eval, data, scripts, infra, migrations
 
 ### Dependencies
 
+The full list is already in `pyproject.toml` / `uv.lock`, with a pip-friendly copy in
+`requirements.txt` and `requirements-dev.txt`. Run `uv sync` (or
+`python -m pip install -r requirements-dev.txt`). The commands below show how each group was added;
+use the same pattern (`uv add <pkg>`, then update `requirements.txt`) for new packages.
+
 ```powershell
 # API + data
 uv add fastapi "uvicorn[standard]" pydantic-settings python-multipart sqlalchemy alembic pyyaml httpx

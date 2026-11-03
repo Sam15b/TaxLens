@@ -10,6 +10,8 @@ tests, evals, scripts, infra and docs next to it. There is no `src/` folder and 
 TaxLens/
 ├── pyproject.toml              # dependencies + ruff/mypy/pytest config (managed by uv)
 ├── uv.lock                     # pinned versions — commit this
+├── requirements.txt            # same runtime deps for pip users (keep in sync with pyproject)
+├── requirements-dev.txt        # -r requirements.txt + pytest, ruff, mypy
 ├── .python-version             # 3.12
 ├── .env.example                # every setting, no real secrets — copy to .env
 ├── .gitignore

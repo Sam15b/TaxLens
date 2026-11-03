@@ -40,8 +40,10 @@ names, phone numbers) **before** any text reaches an LLM.
 ## Quick start
 
 ```powershell
-# prerequisites: uv (https://docs.astral.sh/uv/), Docker Desktop
-uv sync                                   # creates .venv with Python 3.12 and installs deps
+# prerequisites: Python 3.12, Docker Desktop, and uv (https://docs.astral.sh/uv/) or pip
+uv sync                                   # recommended: .venv with exact versions from uv.lock
+# or, with pip:
+#   py -3.12 -m venv .venv; .venv\Scripts\activate; python -m pip install -r requirements-dev.txt
 Copy-Item .env.example .env               # then fill in your free-tier API keys
 uv run pytest                             # sanity check
 uv run uvicorn taxlens.main:app --reload  # http://localhost:8000/docs

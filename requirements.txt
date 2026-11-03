@@ -1,0 +1,64 @@
+# TaxLens runtime dependencies (Python 3.12).
+#
+#   pip:  python -m pip install -r requirements.txt        (dev tools: requirements-dev.txt)
+#   uv:   uv sync   (pyproject.toml lists the same packages; keep the two files in sync)
+#
+# Lower bounds = versions verified to resolve together on 2026-11-03 (Linux + Windows, py3.12).
+# Upper bounds stop the next major release from breaking the build unexpectedly.
+
+# ── API ──────────────────────────────────────────────────────────────
+fastapi>=0.162,<1
+uvicorn[standard]>=0.54,<1
+pydantic-settings>=2.16,<3
+python-multipart>=0.0.33          # file uploads for /ingest and /review
+httpx>=0.28,<1
+pyyaml>=6.0,<7
+
+# ── App data: SQLite (local / CI) + Azure Cosmos DB (cloud, free tier) ─
+sqlalchemy>=2.1,<3
+alembic>=1.20,<2
+azure-cosmos>=4.17,<5
+
+# ── Vector database: Pinecone (Starter plan) ─────────────────────────
+pinecone>=10.3,<11
+
+# ── Ingestion + embeddings (LlamaIndex, local FastEmbed models) ──────
+llama-index-core>=0.14.25,<0.15
+llama-index-readers-file>=0.7,<0.8
+llama-index-embeddings-fastembed>=0.7,<0.8
+pymupdf>=2.1,<3
+fastembed>=0.9,<1                  # dense bge-small + sparse SPLADE
+
+# ── Orchestration + LLM providers (Gemini / Groq free tiers, Ollama local) ─
+langgraph>=1.2,<2
+langchain-core>=1.7,<2
+langchain-google-genai>=4.4,<5
+langchain-groq>=1.1,<2
+langchain-ollama>=1.1,<2
+
+# ── Security: auth + PII masking ─────────────────────────────────────
+pyjwt>=2.15,<3
+pwdlib[argon2]>=0.3,<1
+presidio-analyzer>=2.2.366,<3
+presidio-anonymizer>=2.2.366,<3
+spacy>=3.8,<4
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+
+# ── Azure: Blob, Queue, Key Vault, managed identity ──────────────────
+azure-storage-blob>=12.31,<13
+azure-storage-queue>=12.18,<13
+azure-identity>=1.27,<2
+azure-keyvault-secrets>=4.12,<5
+
+# ── Observability + evaluation (Phoenix local, LangSmith free plan) ──
+arize-phoenix-otel>=0.17,<1
+openinference-instrumentation-langchain>=0.1.81,<0.2
+openinference-instrumentation-llama-index>=4.7,<5
+langsmith>=0.14,<1
+
+# ── MCP server (Hermes integration) ──────────────────────────────────
+mcp>=2.3,<3
+
+# ── Week 5 extensions: uncomment when you build the extra vector backends ─
+# qdrant-client>=1.20,<2
+# oracledb>=26.1,<27
