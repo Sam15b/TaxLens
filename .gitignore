@@ -32,3 +32,6 @@ eval/summary.md
 .idea/
 .DS_Store
 Thumbs.db
+
+# Private day-by-day implementation plan (local only, never published)
+docs/daily-plan/
