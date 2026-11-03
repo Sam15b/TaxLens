@@ -57,6 +57,7 @@ dev = [
     "ruff>=0.17,<1",
     "mypy>=2.4,<3",
     "types-PyYAML>=6.0.12",
+    "pre-commit>=4.7,<5",
 ]
 
 [tool.ruff]
@@ -82,3 +83,4 @@ markers = [
     "eval: calls real LLMs; run only in the eval job",
 ]
 addopts = "-m 'not eval and not integration and not cosmos' --import-mode=importlib"
+asyncio_default_fixture_loop_scope = "function"

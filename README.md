@@ -1,12 +1,17 @@
 # TaxLens
 
+[![CI](https://github.com/Sam15b/TaxLens/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Sam15b/TaxLens/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 **An AI tax & legal document assistant for Indian tax law.** It answers questions about the
 Income-tax Acts (1961 and 2025), CBDT circulars and GST notifications, and every answer cites its
 sources. It reviews uploaded client documents, and it masks personal data (PAN, Aadhaar, GSTIN,
 names, phone numbers) **before** any text reaches an LLM.
 
-> **Status:** 🚧 Sprint 0. The project skeleton and design docs are in place, and implementation
-> starts with [Week 1](docs/04-build-guide.md#week-1--ingestion-hybrid-retrieval-ask).
+> **Status:** 🚧 Sprint 1, in progress. Building the data layer, ingestion and hybrid retrieval
+> ([build guide](docs/04-build-guide.md#week-1--ingestion-hybrid-retrieval-ask)).
 
 ## Why it's interesting
 
