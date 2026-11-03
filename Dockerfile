@@ -21,6 +21,8 @@ RUN if [ -f uv.lock ]; then uv sync --frozen --no-dev; else uv sync --no-dev; fi
 
 # 3) application code
 COPY taxlens ./taxlens
+COPY migrations ./migrations
+COPY alembic.ini ./
 
 RUN mkdir -p /app/var && useradd --create-home --uid 10001 appuser && chown -R appuser /app
 USER appuser
