@@ -99,6 +99,8 @@ TaxLens/
 │   │   ├── models.py           # Pydantic domain models: User, Workspace, Membership, Document, AuditEvent
 │   │   ├── factory.py          # get_repository() based on settings.db_backend
 │   │   ├── sqlite_repo.py      # SQLAlchemy Core + SQLite (local, CI, tests)
+│   │   ├── tables.py           # SQLAlchemy Core table definitions for SQLite
+│   │   ├── migrations.py       # run Alembic upgrade/downgrade from code
 │   │   ├── cosmos_repo.py      # azure-cosmos SDK (Azure)
 │   │   ├── blob.py             # upload/download (Azurite locally, managed identity in Azure)
 │   │   └── queue.py            # enqueue/receive/delete/poison
