@@ -69,6 +69,9 @@ extend-exclude = ["docs"]          # code snippets in docs are illustrative, not
 select = ["E", "F", "I", "B", "UP", "S", "ASYNC"]   # S = bandit security rules
 ignore = ["S101"]                                     # allow assert in tests
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]                       # dummy passwords/hashes in fixtures
+
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
