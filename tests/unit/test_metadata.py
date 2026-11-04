@@ -11,6 +11,7 @@ from taxlens.ingestion.metadata import (
     find_circular_no,
     find_issue_date,
     find_notification_no,
+    find_section_headings,
     section_refs,
 )
 
@@ -104,3 +105,55 @@ def test_extract_metadata_leaves_out_what_it_cannot_find() -> None:
     meta = extract_metadata(header)
     assert meta == {"notification_no": "4/2017-Central Tax (Rate)", "issued_on": "2017-06-28"}
     assert extract_metadata("nothing useful") == {}
+
+
+def test_marked_headings_win_over_numbered_rows() -> None:
+    # ita-2025 after loading: a marked heading, then a numbered table row inside the section
+    text = (
+        "§ 123. Deduction for life insurance premia, deferred annuity, contributions to "
+        "provident fund, etc.\nAn individual or a Hindu undivided family, shall be allowed\n"
+        "1. More than 10000 and upto 100000. Two kilometres.\n"
+        "§ 124. Deduction in respect of employer and assessee contribution to pension scheme.\n"
+    )
+    found = find_section_headings(text)
+    assert [(h.section_no, h.title) for h in found] == [
+        (
+            "123",
+            "Deduction for life insurance premia, deferred annuity, contributions to "
+            "provident fund, etc.",
+        ),
+        ("124", "Deduction in respect of employer and assessee contribution to pension scheme."),
+    ]
+    assert text[found[1].start :].startswith("§ 124.")
+
+
+def test_inline_headings_without_marks() -> None:
+    # consolidated (non-gazette) Act layout: the heading is on the section's own line
+    text = (
+        "80C. Deduction in respect of life insurance premia, deferred annuity, etc.—(1) In "
+        "computing the total income of an assessee\n"
+        "80D. Deduction in respect of health insurance premia.\n(1) In computing\n"
+    )
+    assert [(h.section_no, h.title) for h in find_section_headings(text)] == [
+        ("80C", "Deduction in respect of life insurance premia, deferred annuity, etc."),
+        ("80D", "Deduction in respect of health insurance premia."),
+    ]
+
+
+def test_schedules_are_headings_without_a_section_number() -> None:
+    # ita-2025: "SCHEDULE XV" / "(See section 123)" / title in capitals
+    text = (
+        "§ 536. Repeal and savings.\n(1) The Income-tax Act, 1961 is hereby repealed.\n"
+        "SCHEDULE XV\n(See section 123)\nDEDUCTION IN RESPECT OF LIFE INSURANCE PREMIA\n"
+        "1. Any sum paid to effect or to keep in force an insurance on the life.\n"
+    )
+    headings = find_section_headings(text)
+    assert [(h.section_no, h.title) for h in headings] == [
+        ("536", "Repeal and savings."),
+        (None, "Schedule XV: Deduction in respect of life insurance premia"),
+    ]
+
+
+def test_heading_regex_ignores_amounts_and_references() -> None:
+    text = "the sum of Rs. 50,000.\nunder section 80C. The assessee\n2017. Notified\n"
+    assert find_section_headings(text) == []

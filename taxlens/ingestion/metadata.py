@@ -8,6 +8,7 @@ the values in data/sources.yaml and the Pinecone metadata filters.
 """
 
 import re
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
@@ -55,7 +56,7 @@ def find_circular_no(text: str) -> str | None:
     return f"{int(m[1])}/{m[2]}" if m else None
 
 
-def _canonical_notification(number: str, year: str, kind: str) -> str:
+def canonical_notification(number: str, year: str, kind: str) -> str:
     kind = " ".join(kind.split())
     kind = re.sub(r"\s*\(\s*rate\s*\)", " (Rate)", kind, flags=re.I)
     kind = re.sub(r"\bunion\s+territory\b", "Union Territory", kind, flags=re.I)
@@ -65,7 +66,7 @@ def _canonical_notification(number: str, year: str, kind: str) -> str:
 
 def find_notification_no(text: str) -> str | None:
     m = NOTIFICATION_RE.search(text)
-    return _canonical_notification(m[1], m[2], m[3]) if m else None
+    return canonical_notification(m[1], m[2], m[3]) if m else None
 
 
 def _date(day: str, month: str, year: str) -> date | None:
@@ -122,3 +123,47 @@ def extract_metadata(text: str) -> dict[str, Any]:
     if issued := find_issue_date(text):
         meta["issued_on"] = issued.isoformat()
     return meta
+
+
+SCHEDULE_RE = re.compile(
+    r"^[ \t]*(?:THE[ \t]+(?:[A-Z]+[ \t]+)?)?SCHEDULE(?:[ \t]+([IVXLC]+))?[ \t]*$", re.M
+)
+_HEADING_END = re.compile(r"\.?\s*[—–]+\s*\(1\)|\.[—–]|\s+\(1\)\s")  # "etc.—(1) In computing"
+
+
+@dataclass(frozen=True)
+class Heading:
+    section_no: str | None  # None for a Schedule
+    title: str
+    start: int  # offset of the heading line in the text
+
+
+def _clean_heading(title: str) -> str:
+    title = _HEADING_END.split(title, maxsplit=1)[0]
+    return " ".join(title.split()).rstrip(" .:;,—–-") + ("." if title.strip() else "")
+
+
+def _schedule_title(text: str, m: re.Match[str]) -> str:
+    """ "SCHEDULE XV" + the first capitalised title line under it (skipping "(See section 123)")."""
+    name = f"Schedule {m[1]}" if m[1] else " ".join(m[0].split()).title()
+    for line in text[m.end() : m.end() + 400].split("\n")[1:5]:
+        line = line.strip()
+        if line and line[0] not in "[(" and line.upper() == line and re.search(r"[A-Z]{3}", line):
+            return f"{name}: {line.capitalize()}"
+    return name
+
+
+def find_section_headings(text: str) -> list[Heading]:
+    """Section (and Schedule) headings of an Act, in order.
+
+    When the loader marked headings from the page layout (``§ 9. Levy and collection.``), only
+    those count: numbered table rows inside sections look exactly like headings otherwise.
+    Without marks, every ``80C. Deduction ...`` line is a candidate (see chunking for how the
+    table of contents and repeated numbers are filtered).
+    """
+    marked = list(MARKED_HEADING_RE.finditer(text))
+    matches = marked or list(SECTION_HEADING_RE.finditer(text))
+    found = [Heading(m[1], _clean_heading(m[2]), m.start()) for m in matches]
+    schedules = SCHEDULE_RE.finditer(text)
+    found += [Heading(None, _schedule_title(text, m), m.start()) for m in schedules]
+    return sorted(found, key=lambda h: h.start)
