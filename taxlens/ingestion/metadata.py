@@ -146,8 +146,10 @@ def _clean_heading(title: str) -> str:
 def _schedule_title(text: str, m: re.Match[str]) -> str:
     """ "SCHEDULE XV" + the first capitalised title line under it (skipping "(See section 123)")."""
     name = f"Schedule {m[1]}" if m[1] else " ".join(m[0].split()).title()
-    for line in text[m.end() : m.end() + 400].split("\n")[1:5]:
+    for line in text[m.end() : m.end() + 400].split("\n")[1:6]:
         line = line.strip()
+        if re.fullmatch(r"PART\s+[A-Z]+", line):  # "PART A" opens the schedule, the title follows
+            continue
         if line and line[0] not in "[(" and line.upper() == line and re.search(r"[A-Z]{3}", line):
             return f"{name}: {line.capitalize()}"
     return name
