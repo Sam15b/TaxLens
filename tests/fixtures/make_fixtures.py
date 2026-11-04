@@ -123,8 +123,71 @@ def make_notification(path: Path) -> None:
     doc.save(path, garbage=4, deflate=True, no_new_id=True)
 
 
+# Gazette Act layout: a main column (x 117-477) and section headings as narrow margin notes,
+# left on even pages and right on odd ones. (y, body, note) per section start.
+ACT_COLUMN = (117, 477)
+ACT_PAGES: list[list[tuple[float, str, str | None]]] = [
+    [
+        (100, "THE SAMPLE TAXATION ACT, 2025\nCHAPTER I\nPRELIMINARY", None),
+        (
+            160,
+            "1. (1) This Act may be called the Sample Taxation Act, 2025, and it is a synthetic\n"
+            "document made up for the TaxLens test-suite.\n"
+            "(2) It extends to the whole of the imaginary territory to which it applies.",
+            "Short title,\nextent and\ncommencement.",
+        ),
+        (
+            250,
+            "2. In this Act, unless the context otherwise requires, the following table applies\n"
+            "for computing the distance referred to in section 80C and section 194J:-",
+            "Definitions.",
+        ),
+        # A numbered table row inside section 2: it must not become a section.
+        (330, "1. More than 10000 and upto 100000. Two kilometres.", None),
+        (350, "2. More than 100000 and upto 1000000. Six kilometres.", None),
+    ],
+    [
+        # The section number alone on its line, as in parts of the Income-tax Act, 2025.
+        (
+            100,
+            "80C.\nAn individual or a Hindu undivided family shall be allowed a deduction of the\n"
+            "whole of the amount paid in the previous year as life insurance premia, being\n"
+            "the aggregate of the sums specified in sub-section (2), not exceeding Rs. 1,50,000.",
+            "Deduction in\nrespect of life\ninsurance premia,\netc.",
+        ),
+        (
+            220,
+            "194J. (1) Any person paying fees for professional services or fees for technical\n"
+            "services shall deduct tax at source at the rate of ten per cent of such sum, as\n"
+            "provided under the Sample Taxation Act, 2025 and the Income-tax Act, 1961.",
+            "Fees for\nprofessional or\ntechnical services.",
+        ),
+    ],
+]
+
+
+def make_act(path: Path) -> None:
+    doc = pymupdf.open()
+    left, right = ACT_COLUMN
+    for number, sections in enumerate(ACT_PAGES, start=1):
+        page = doc.new_page(width=595, height=842)
+        page.insert_text((200, 40), "THE GAZETTE OF INDIA EXTRAORDINARY", fontsize=9)
+        note_x = 500 if number % 2 else 57  # right margin on odd pages, left on even
+        for y, body, note in sections:
+            page.insert_textbox(pymupdf.Rect(left, y, right, y + 120), body, fontsize=10)
+            if note:
+                box = pymupdf.Rect(note_x, y, note_x + 55, y + 80)
+                page.insert_textbox(box, note, fontsize=7)
+        if number == 2:
+            page.insert_text((57, 285), "43 of 1961.", fontsize=7)  # cites the 1961 Act
+        page.insert_text((50, 790), DISCLAIMER, fontsize=7)
+    doc.set_metadata({"title": "Synthetic sample act", "creationDate": "", "modDate": ""})
+    doc.save(path, garbage=4, deflate=True, no_new_id=True)
+
+
 if __name__ == "__main__":
     make_circular(HERE / "sample_circular.pdf")
     make_notification(HERE / "sample_notification.pdf")
-    for name in ("sample_circular.pdf", "sample_notification.pdf"):
+    make_act(HERE / "sample_act.pdf")
+    for name in ("sample_circular.pdf", "sample_notification.pdf", "sample_act.pdf"):
         print(f"wrote {name} ({(HERE / name).stat().st_size:,} bytes)")

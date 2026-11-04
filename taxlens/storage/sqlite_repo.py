@@ -7,7 +7,7 @@
 """
 
 from collections.abc import Mapping
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -153,10 +153,11 @@ class SqliteRepository:
         current = self.get_document(workspace_id, document_id)
         if current is None:
             raise NotFoundError(f"document {document_id} not found in workspace {workspace_id}")
+        # updated_at must move forward even when the clock hasn't ticked: Windows clocks advance in
+        # ~15 ms steps, so a create and an update can otherwise share a timestamp.
+        stamp = max(utcnow(), current.updated_at + timedelta(microseconds=1))
         # Re-validate the merged document so bad values (e.g. unknown status) never reach the DB.
-        updated = Document.model_validate(
-            {**current.model_dump(), **fields, "updated_at": utcnow()}
-        )
+        updated = Document.model_validate({**current.model_dump(), **fields, "updated_at": stamp})
         changes = {name: getattr(updated, name) for name in fields}
         changes["updated_at"] = _timestamp(updated.updated_at)
         with self.engine.begin() as conn:

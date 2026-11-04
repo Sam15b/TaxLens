@@ -3,7 +3,13 @@ from pathlib import Path
 import pymupdf
 import pytest
 
-from taxlens.ingestion.loaders import MIN_CHARS_PER_PAGE, Page, load_pdf, needs_ocr
+from taxlens.ingestion.loaders import (
+    MIN_CHARS_PER_PAGE,
+    SECTION_MARK,
+    Page,
+    load_pdf,
+    needs_ocr,
+)
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 BODY = "Section 194J of the Income-tax Act, 1961 requires deduction of tax at source on fees."
@@ -63,3 +69,32 @@ def test_sample_notification_fixture() -> None:
 def test_missing_file_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_pdf(tmp_path / "nope.pdf")
+
+
+def test_margin_notes_become_marked_section_headings() -> None:
+    pages = load_pdf(FIXTURES / "sample_act.pdf")
+    assert [h for p in pages for h in p.headings] == [
+        ("1", "Short title, extent and commencement."),
+        ("2", "Definitions."),
+        ("80C", "Deduction in respect of life insurance premia, etc."),  # note in 4 lines
+        ("194J", "Fees for professional or technical services."),
+    ]
+    first, second = pages[0].text, pages[1].text
+    assert f"{SECTION_MARK} 1. Short title, extent and commencement.\n(1) This Act" in first
+    assert f"{SECTION_MARK} 80C. Deduction in respect of life insurance premia, etc.\n" in second
+    assert "An individual or a Hindu undivided family" in second  # "80C." was alone on its line
+
+
+def test_numbered_table_rows_and_citations_are_not_headings() -> None:
+    pages = load_pdf(FIXTURES / "sample_act.pdf")
+    first, second = pages[0].text, pages[1].text
+    assert "\n1. More than 10000 and upto 100000. Two kilometres." in first  # untouched
+    assert f"{SECTION_MARK} 1. More" not in first
+    assert "43 of 1961." in second  # kept as text, never used as a heading
+    assert all("1961" not in heading for _, heading in pages[1].headings)
+
+
+def test_documents_without_margin_notes_have_no_marks() -> None:
+    for name in ("sample_circular.pdf", "sample_notification.pdf"):
+        pages = load_pdf(FIXTURES / name)
+        assert all(not p.headings and SECTION_MARK not in p.text for p in pages)
