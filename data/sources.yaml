@@ -1,15 +1,169 @@
-# Manifest of public source documents. Fill in real URLs from incometaxindia.gov.in,
-# indiacode.nic.in and cbic-gst.gov.in. sha256 is filled by: scripts/download_sources.py --update-hashes
-# See docs/03-local-setup.md § 3.7.
+# Manifest of the public source corpus. Curated by hand: don't crawl. See docs/03-local-setup.md § 3.7.
+#
+# Fields
+#   id            stable id; the file is saved as data/raw/<id>.pdf
+#   doc_type      act | rules | circular | notification
+#   act           the parent Act, stored on every chunk (two Income-tax Acts co-exist)
+#   circular_no / notification_no / issued_on   citation metadata (issued_on is YYYY-MM-DD)
+#   url           official source. For manual entries it may be the circular's landing page
+#   manual        true = the host blocks scripted downloads (incometaxindia.gov.in, indiacode.nic.in).
+#                 Save the PDF by hand as data/raw/<id>.pdf; the sha256 check still applies.
+#   sha256        filled in by: uv run python scripts/download_sources.py --update-hashes
+
+# ── Acts ─────────────────────────────────────────────────────────────────────
 - id: ita-2025
   title: Income-tax Act, 2025
   doc_type: act
   act: Income-tax Act, 2025
-  url: TODO
+  issued_on: 2025-08-21
+  url: https://egazette.gov.in/WriteReadData/2025/265620.pdf
   sha256: null
+
 - id: ita-1961
-  title: Income-tax Act, 1961 (as amended)
+  title: Income-tax Act, 1961 (as amended by Finance Act, 2026)
   doc_type: act
   act: Income-tax Act, 1961
-  url: TODO
+  url: https://www.incometaxindia.gov.in/documents/d/guest/income_tax_act_1961_as_amended_by_fa_act_2026-1-pdf
+  manual: true
+  sha256: null
+
+- id: cgst-act-2017
+  title: Central Goods and Services Tax Act, 2017
+  doc_type: act
+  act: CGST Act, 2017
+  url: https://gstcouncil.gov.in/sites/default/files/2024-04/annexure-3_cgst-act_2017.pdf
+  sha256: null
+
+# ── CBDT circulars (Income-tax) ──────────────────────────────────────────────
+- id: cbdt-circular-2025-03
+  title: CBDT Circular No. 3/2025 - TDS on salaries for FY 2024-25 under section 192
+  doc_type: circular
+  act: Income-tax Act, 1961
+  circular_no: 3/2025
+  issued_on: 2025-02-20
+  url: https://www.incometaxindia.gov.in/w/circular-no.-3/2025-income-tax-deduction-from-salaries-during-the-financial-year-2024-25-under-section-192-of-the-income-tax-act-1961
+  manual: true
+  sha256: null
+
+- id: cbdt-circular-2025-05
+  title: CBDT Circular No. 5/2025 - waiver of interest u/s 201(1A)(ii) / 206C(7)
+  doc_type: circular
+  act: Income-tax Act, 1961
+  circular_no: 5/2025
+  issued_on: 2025-03-28
+  url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
+  manual: true
+  sha256: null
+
+- id: cbdt-circular-2025-08
+  title: CBDT Circular No. 8/2025 - clarification on Circular No. 5/2025 (interest u/s 201(1A)(ii) / 206C(7))
+  doc_type: circular
+  act: Income-tax Act, 1961
+  circular_no: 8/2025
+  issued_on: null
+  url: https://www.incometaxindia.gov.in/w/circular-no.-8/2025-clarification-regarding-cbdt-s-circular-no.-5/2025-dated-28.03.2025-for-waiver-on-levy-of-interest-under-section-201-1a-ii-/-206c-7-of-the-income-tax-act-1961-as-the-case-may-be-in-specific-cases
+  manual: true
+  sha256: null
+
+- id: cbdt-circular-2025-09
+  title: CBDT Circular No. 9/2025 - TDS/TCS relief where PAN was inoperative (rule 114AAA)
+  doc_type: circular
+  act: Income-tax Act, 1961
+  circular_no: 9/2025
+  issued_on: 2025-07-21
+  url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
+  manual: true
+  sha256: null
+
+- id: cbdt-circular-2026-02
+  title: CBDT Circular No. 2/2026 - extension of time for TDS certificates u/s 203 (quarter ending 31.12.2025)
+  doc_type: circular
+  act: Income-tax Act, 1961
+  circular_no: 2/2026
+  issued_on: null
+  url: https://www.incometaxindia.gov.in/w/circular-no.-2/2026-order-under-section-119-of-the-income-tax-act-1961-for-extension-of-timeline-for-issuance-of-tax-deducted-at-source-tds-certificate-under-section-203-of-the-act-for-the-quarter-ending-31st-december-2025
+  manual: true
+  sha256: null
+
+# ── GST: Central Tax (Rate) notifications ────────────────────────────────────
+- id: cgst-notif-01-2017-rate
+  title: Notification No. 1/2017-Central Tax (Rate) - CGST rate schedule for goods
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 1/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/download_4_0.pdf
+  sha256: null
+
+- id: cgst-notif-04-2017-rate
+  title: Notification No. 4/2017-Central Tax (Rate) - reverse charge on specified goods u/s 9(3)
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 4/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/download_6.pdf
+  sha256: null
+
+- id: cgst-notif-11-2017-rate
+  title: Notification No. 11/2017-Central Tax (Rate) - CGST rates for services
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 11/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/download_4.pdf
+  sha256: null
+
+- id: cgst-notif-12-2017-rate
+  title: Notification No. 12/2017-Central Tax (Rate) - exempt services
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 12/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/download_6_0.pdf
+  sha256: null
+
+- id: cgst-notif-13-2017-rate
+  title: Notification No. 13/2017-Central Tax (Rate) - services under reverse charge (RCM)
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 13/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/download_8_0.pdf
+  sha256: null
+
+# ── GST: Central Tax notifications (e-invoicing) ─────────────────────────────
+- id: cgst-notif-70-2019-ct
+  title: Notification No. 70/2019-Central Tax - class of registered persons required to issue e-invoice
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 70/2019-Central Tax
+  issued_on: 2019-12-13
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/notfctn-70-central-tax-english-2019.pdf
+  sha256: null
+
+- id: cgst-notif-13-2020-ct
+  title: Notification No. 13/2020-Central Tax - e-invoicing exemptions and turnover threshold
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 13/2020-Central Tax
+  issued_on: 2020-03-21
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/notfctn-13-central-tax-english-2020.pdf
+  sha256: null
+
+- id: cgst-notif-05-2021-ct
+  title: Notification No. 5/2021-Central Tax - e-invoicing above Rs. 50 crore from 1 April 2021
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 5/2021-Central Tax
+  issued_on: 2021-03-08
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/notfctn-05-central-tax-english-2021.pdf
+  sha256: null
+
+- id: cgst-notif-10-2023-ct
+  title: Notification No. 10/2023-Central Tax - e-invoicing above Rs. 5 crore from 1 August 2023
+  doc_type: notification
+  act: CGST Act, 2017
+  notification_no: 10/2023-Central Tax
+  issued_on: 2023-05-10
+  url: https://gstcouncil.gov.in/sites/default/files/2024-05/10ct_eng.pdf
   sha256: null
