@@ -1,10 +1,20 @@
 """Section-aware chunking + SentenceSplitter + contextual chunk header.
 
-Acts are split into sections first, so a chunk never mixes two sections. See
+Acts are split into sections first, so a chunk never mixes two sections. Pages are joined with
+their start offsets recorded, so every chunk knows the page it starts on (for citations). See
 docs/04-build-guide.md Week 1 → "Section-aware chunking".
+
+Preview the chunks of a downloaded document:
+
+    uv run python -m taxlens.ingestion.chunking data/raw/ita-2025.pdf --preview 5
 """
 
+import argparse
+import sys
+from bisect import bisect_right
+from collections.abc import Sequence
 from functools import cache
+from pathlib import Path
 from typing import Any, NamedTuple
 
 from llama_index.core.node_parser import SentenceSplitter
@@ -131,3 +141,84 @@ def chunk_document(text: str, base_meta: dict[str, Any]) -> list[Chunk]:
             chunk_meta = {**meta, "chunk_no": len(chunks), "offset": section.start + offset}
             chunks.append((f"{header}\n\n{piece}", chunk_meta))
     return chunks
+
+
+PAGE_SEPARATOR = "\n\n"
+
+
+def join_pages(pages: Sequence[str]) -> tuple[str, list[int]]:
+    """The document text and the offset where each page starts in it."""
+    starts, pos = [], 0
+    for i, page in enumerate(pages):
+        if i:
+            pos += len(PAGE_SEPARATOR)
+        starts.append(pos)
+        pos += len(page)
+    return PAGE_SEPARATOR.join(pages), starts
+
+
+def page_at(offset: int, page_starts: Sequence[int]) -> int:
+    """1-based page number of the page containing ``offset``."""
+    return max(bisect_right(page_starts, offset), 1)
+
+
+def chunk_pages(pages: Sequence[str], base_meta: dict[str, Any]) -> list[Chunk]:
+    """Like ``chunk_document`` for a list of (cleaned) page texts; adds ``page`` to each chunk:
+    the page the chunk starts on."""
+    text, starts = join_pages(pages)
+    chunks = chunk_document(text, base_meta)
+    for _, meta in chunks:
+        meta["page"] = page_at(meta["offset"], starts)
+    return chunks
+
+
+# ── preview CLI ──────────────────────────────────────────────────────────────
+
+
+def _base_meta(path: Path, text: str) -> dict[str, Any]:
+    """Metadata from data/sources.yaml (by file name), topped up with what the text reveals."""
+    import yaml
+
+    from taxlens.ingestion.metadata import extract_metadata
+
+    sources = Path(__file__).resolve().parents[2] / "data" / "sources.yaml"
+    entries = yaml.safe_load(sources.read_text(encoding="utf-8")) if sources.exists() else []
+    entry: dict[str, Any] = next((e for e in entries or [] if e["id"] == path.stem), {})
+    keep = ("title", "doc_type", "act", "circular_no", "notification_no", "issued_on", "url")
+    meta = {k: (str(v) if k == "issued_on" else v) for k, v in entry.items() if k in keep and v}
+    meta.setdefault("title", path.stem)
+    meta.setdefault("doc_type", "act" if "act" in path.stem else "circular")
+    return {**extract_metadata(text), **meta, "source_id": path.stem}
+
+
+def main(argv: list[str] | None = None) -> int:
+    from taxlens.ingestion.cleaning import clean_pages
+    from taxlens.ingestion.loaders import load_pdf, needs_ocr
+
+    p = argparse.ArgumentParser(description="Preview the chunks of a PDF.")
+    p.add_argument("pdf", type=Path)
+    p.add_argument("--preview", type=int, default=5, help="how many chunks to print")
+    p.add_argument("--section", help="start the preview at this section, e.g. 80C")
+    a = p.parse_args(argv)
+
+    pages = load_pdf(a.pdf)
+    if needs_ocr(pages):
+        print(f"{a.pdf.name}: looks scanned ({sum(x.needs_ocr for x in pages)} low-text pages)")
+        return 1
+    cleaned = clean_pages([x.text for x in pages])
+    meta = _base_meta(a.pdf, "\n".join(cleaned))
+    chunks = chunk_pages(cleaned, meta)
+    sections = {m["section"] for _, m in chunks if m["section"]}
+    print(f"{a.pdf.name}: {len(pages)} pages, {len(sections)} sections, {len(chunks)} chunks")
+    start = 0
+    if a.section:
+        start = next((i for i, (_, m) in enumerate(chunks) if m["section"] == a.section), 0)
+    for text, m in chunks[start : start + a.preview]:
+        keys = ("chunk_no", "page", "section", "heading")
+        shown = {k: m[k] for k in keys if m.get(k) not in (None, "")}
+        print(f"\n── {shown}\n{text[:600]}{' …' if len(text) > 600 else ''}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

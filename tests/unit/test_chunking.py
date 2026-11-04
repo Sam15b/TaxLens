@@ -6,7 +6,11 @@ from taxlens.ingestion.chunking import (
     CHUNK_SIZE,
     Section,
     chunk_document,
+    chunk_pages,
     contextual_header,
+    join_pages,
+    main,
+    page_at,
     split_act_into_sections,
     splitter,
 )
@@ -170,3 +174,35 @@ def test_every_fixture_produces_chunks(name: str, meta: dict[str, str]) -> None:
 
 def test_empty_text_has_no_chunks() -> None:
     assert chunk_document("  \n ", CIRCULAR_META) == []
+
+
+def test_join_pages_and_page_lookup() -> None:
+    text, starts = join_pages(["aaa", "", "bbbb"])
+    assert text == "aaa\n\n\n\nbbbb"
+    assert starts == [0, 5, 7]
+    assert [page_at(i, starts) for i in (0, 2, 7, 10)] == [1, 1, 3, 3]
+
+
+def test_chunks_record_the_page_they_start_on() -> None:
+    # three pages: section 80C starts on page 1; section 194J starts on page 3
+    page1 = f"§ 80C. Deduction in respect of life insurance premia.\n{FILLER}"
+    page2 = " ".join(f"Clause {i} of section 80C applies as prescribed." for i in range(120))
+    page3 = f"§ 194J. Fees for professional or technical services.\n{FILLER}"
+    chunks = chunk_pages([page1, page2, page3], ACT_META)
+    first = {m["section"]: m["page"] for _, m in reversed(chunks)}
+    assert first == {"80C": 1, "194J": 3}
+    assert {m["page"] for _, m in chunks if m["section"] == "80C"} >= {1, 2}  # long section
+    assert all(m["page"] == 3 for _, m in chunks if m["section"] == "194J")
+
+
+def test_sample_act_pages() -> None:
+    cleaned = clean_pages([p.text for p in load_pdf(FIXTURES / "sample_act.pdf")])
+    pages = {m["section"]: m["page"] for _, m in chunk_pages(cleaned, ACT_META)}
+    assert pages == {"1": 1, "2": 1, "80C": 2, "194J": 2}
+
+
+def test_preview_cli(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main([str(FIXTURES / "sample_act.pdf"), "--preview", "2", "--section", "80C"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("sample_act.pdf: 2 pages, 4 sections")
+    assert "'section': '80C'" in out and "'page': 2" in out
