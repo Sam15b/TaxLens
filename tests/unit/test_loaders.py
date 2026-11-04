@@ -43,6 +43,23 @@ def test_document_level_ocr_threshold() -> None:
     assert needs_ocr([])
 
 
+def test_sample_circular_fixture() -> None:
+    pages = load_pdf(FIXTURES / "sample_circular.pdf")
+    assert len(pages) == 3
+    assert [p.needs_ocr for p in pages] == [False, False, True]  # page 3 is blank
+    assert "Circular No. 3/2025" in pages[0].text
+    assert needs_ocr(pages)  # 1 of 3 pages (33%) is over the 30% threshold
+
+
+def test_sample_notification_fixture() -> None:
+    pages = load_pdf(FIXTURES / "sample_notification.pdf")
+    assert len(pages) == 2
+    assert not any(p.needs_ocr for p in pages)
+    text = " ".join(pages[0].text.split())  # this font emits NBSPs between words, like gazettes
+    assert "Notification No. 12/2025 – Central Tax (Rate)" in text
+    assert "अधिसूचना" in text  # bilingual: the Hindi block survives loading
+
+
 def test_missing_file_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_pdf(tmp_path / "nope.pdf")
