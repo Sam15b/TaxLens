@@ -58,7 +58,14 @@ dev = [
     "mypy>=2.4,<3",
     "types-PyYAML>=6.0.12",
     "pre-commit>=4.7,<5",
+    "truststore>=0.10,<1",          # OS trust store for scripts/download_sources.py
 ]
+
+[tool.uv]
+# Copy packages into .venv instead of hard-linking them from the uv cache: nltk (used by
+# llama_index's SentenceSplitter) refuses to open hard-linked data files (CWE-59 check).
+# The Dockerfile sets UV_LINK_MODE=copy for the same reason.
+link-mode = "copy"
 
 [tool.ruff]
 line-length = 100

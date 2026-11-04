@@ -2,3 +2,14 @@
 ci:
   - q001
   - q002
+
+# Source documents the CI corpus is built from (ids in data/sources.yaml). Only entries that
+# download without a manual step, so CI never depends on a hand-saved file.
+#   uv run python scripts/download_sources.py --subset ci --dest var/ci-raw
+sources:
+  ci:
+    - cgst-act-2017
+    - cgst-notif-13-2017-rate
+    - cgst-notif-70-2019-ct
+    - cgst-notif-13-2020-ct
+    - cgst-notif-10-2023-ct

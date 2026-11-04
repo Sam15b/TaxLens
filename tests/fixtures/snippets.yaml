@@ -1,0 +1,129 @@
+# Real snippets for the metadata regex tests (tests/unit/test_metadata.py).
+#
+# `source` is the data/sources.yaml id (and page) the text was copied from, after cleaning.
+# Every snippet is checked for ALL four fields: a field left out means "must find nothing", so
+# each snippet doubles as a false-positive test.
+#   circular_no / notification_no / issued_on (YYYY-MM-DD) / section_refs (sorted list)
+
+# ── GST notifications: number formats as printed ─────────────────────────────
+- source: cgst-notif-01-2017-rate p1
+  text: |-
+    Notification No.1/2017-Central Tax (Rate)
+    New Delhi, the 28th June, 2017
+  notification_no: 1/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+
+- source: cgst-notif-12-2017-rate p1
+  text: |-
+    Notification No. 12/2017- Central Tax (Rate)
+    New Delhi, the 28th June, 2017
+  notification_no: 12/2017-Central Tax (Rate)
+  issued_on: 2017-06-28
+
+- source: cgst-notif-05-2021-ct p1
+  text: |-
+    Notification No. 05/2021 – Central Tax
+    New Delhi, the 8th March, 2021
+  notification_no: 5/2021-Central Tax
+  issued_on: 2021-03-08
+
+- source: cgst-notif-13-2020-ct p1
+  text: |-
+    Notification No. 13/2020– Central Tax
+    New Delhi, the 21st March, 2020
+  notification_no: 13/2020-Central Tax
+  issued_on: 2020-03-21
+
+- source: cgst-notif-70-2019-ct p1
+  text: |-
+    Notification No. 70/2019 – Central Tax
+    New Delhi, the 13th December, 2019
+  notification_no: 70/2019-Central Tax
+  issued_on: 2019-12-13
+
+- source: cgst-notif-10-2023-ct p1  # the number is split across two lines
+  text: |-
+    NOTIFICATION
+    No. 10/2023 – Central Tax
+  notification_no: 10/2023-Central Tax
+
+- source: cgst-notif-05-2021-ct p1  # a notification cited inside another
+  text: notification No. 13/2020 – Central Tax, dated the 21st March, 2020
+  notification_no: 13/2020-Central Tax
+  issued_on: 2020-03-21
+
+- source: cgst-act-2017  # em-dash and a pre-GST tax
+  text: notification No. 26/2012—Service Tax, dated the 20th June, 2012
+  notification_no: 26/2012-Service Tax
+  issued_on: 2012-06-20
+
+# ── Dates in Act headers ─────────────────────────────────────────────────────
+- source: ita-2025 p1  # the US-style masthead date comes first; the Act's own date wins
+  text: |-
+    NEW DELHI, THURSDAY, AUGUST 21, 2025/SHRAVANA 30, 1947 (Saka)
+    New Delhi, the 21st August, 2025/Shravana 30, 1947 (Saka)
+  issued_on: 2025-08-21
+
+- source: cgst-act-2017 p1
+  text: |-
+    THE CENTRAL GOODS AND SERVICES TAX ACT, 2017
+    NO. 12 OF 2017
+    [12th April, 2017.]
+  issued_on: 2017-04-12
+
+# ── CBDT circulars ───────────────────────────────────────────────────────────
+- source: cbdt-circular-2025-03 (incometaxindia.gov.in page title)
+  text: >-
+    Circular No. 3/2025 : Income-tax deduction from salaries during the financial year
+    2024-25 under section 192 of the Income-tax Act, 1961
+  circular_no: 3/2025
+  section_refs: ["192"]
+
+- source: cbdt-circular-2025-08 (incometaxindia.gov.in title, as given in its URL)
+  text: >-
+    Circular No. 8/2025 - Clarification regarding CBDT's Circular No. 5/2025 dated 28.03.2025
+    for waiver on levy of interest under section 201(1A)(ii) / 206C(7) of the Income-tax Act, 1961
+  circular_no: 8/2025  # the first circular is the document's own number
+  # Known limit: a bare title has no issue date, so the CITED circular's date is returned.
+  # That is why data/sources.yaml values override extracted ones when chunking.
+  issued_on: 2025-03-28
+  section_refs: ["201(1A)(ii)"]
+
+- source: tests/fixtures/sample_circular.pdf p1 (synthetic)  # "F. No." is not a circular no.
+  text: |-
+    Circular No. 3/2025
+    F. No. 275/12/2025-IT(B)
+    New Delhi, dated 15th March, 2025
+  circular_no: 3/2025
+  issued_on: 2025-03-15
+
+- source: format variant from docs/04-build-guide.md
+  text: CBDT Circular No.03 / 2025 dated 7th April, 2025
+  circular_no: 3/2025
+  issued_on: 2025-04-07
+
+# ── Section references in running text ───────────────────────────────────────
+- source: cgst-act-2017
+  text: the provisions of sub-sections (3) and (4) of section 9, a registered person, whose
+  section_refs: ["9"]
+
+- source: cgst-act-2017  # "sub-sections (1) and (2)" refers to the same section: no refs
+  text: (3) Subject to the provisions of sub-sections (1) and (2), the Government may, on the
+
+- source: ita-2025
+  text: purposes of sections 161, 174 and 312, includes a person who is not ordinarily
+  section_refs: ["161", "174", "312"]
+
+- source: ita-2025  # a range: the two ends are recorded
+  text: to a scheme of arrangement under sections 230 to 232 of the Companies
+  section_refs: ["230", "232"]
+
+- source: ita-2025  # amounts and Schedule numbers are not sections
+  text: >-
+    aggregate of the sums enumerated in Schedule XV, as does not exceed ₹ 150000,
+    while computing the total income for that year
+- source: tests/fixtures/sample_circular.pdf p1 (synthetic)
+  text: >-
+    the threshold of Rs. 50,000 is to be applied to the aggregate amount credited or paid
+    to the payee during the financial year 2025-26 under section 194J of the Act
+  section_refs: ["194J"]

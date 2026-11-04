@@ -9,3 +9,4 @@ ruff>=0.17,<1
 mypy>=2.4,<3
 types-PyYAML>=6.0.12
 pre-commit>=4.7,<5
+truststore>=0.10,<1
