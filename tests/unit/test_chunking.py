@@ -1,6 +1,15 @@
 from pathlib import Path
 
-from taxlens.ingestion.chunking import Section, split_act_into_sections
+import pytest
+
+from taxlens.ingestion.chunking import (
+    CHUNK_SIZE,
+    Section,
+    chunk_document,
+    contextual_header,
+    split_act_into_sections,
+    splitter,
+)
 from taxlens.ingestion.cleaning import clean_pages
 from taxlens.ingestion.loaders import load_pdf
 
@@ -80,3 +89,84 @@ def test_preamble_is_kept_and_text_without_headings_is_one_section() -> None:
         Section(None, "", "just a paragraph of text", 0)
     ]
     assert split_act_into_sections("   ") == []
+
+
+ACT_META = {"doc_type": "act", "act": "Sample Taxation Act, 2025", "title": "Sample Act"}
+CIRCULAR_META = {
+    "doc_type": "circular",
+    "title": "CBDT Circular No. 3/2025 - TDS on fees under section 194J",
+    "circular_no": "3/2025",
+    "issued_on": "2025-03-15",
+}
+NOTIFICATION_META = {
+    "doc_type": "notification",
+    "title": "Notification No. 12/2025-Central Tax (Rate)",
+    "notification_no": "12/2025-Central Tax (Rate)",
+    "issued_on": "2025-06-28",
+}
+
+
+def test_contextual_header() -> None:
+    meta = {**ACT_META, "section": "80C", "heading": "Deduction in respect of life insurance."}
+    assert contextual_header(meta) == (
+        "Sample Taxation Act, 2025 | Section 80C: Deduction in respect of life insurance."
+    )
+    assert contextual_header(
+        {**ACT_META, "section": None, "heading": "Schedule XV: Deduction"}
+    ) == ("Sample Taxation Act, 2025 | Schedule XV: Deduction")
+    # the number is already in the title, so it isn't repeated; the date is added
+    assert contextual_header(CIRCULAR_META) == (
+        "CBDT Circular No. 3/2025 - TDS on fees under section 194J | dated 2025-03-15"
+    )
+    assert contextual_header(
+        {"doc_type": "circular", "title": "Guidance", "circular_no": "3/2025"}
+    ) == ("Guidance | Circular No. 3/2025")
+
+
+def test_act_chunks_never_mix_sections_and_carry_the_header() -> None:
+    text = act_text()
+    sections = {s.section_no: s for s in split_act_into_sections(text)}
+    chunks = chunk_document(text, ACT_META)
+    assert {m["section"] for _, m in chunks} == {"1", "2", "80C", "194J"}
+    for chunk_text, meta in chunks:
+        header, _, body = chunk_text.partition("\n\n")
+        assert header == contextual_header(meta)
+        assert body in sections[meta["section"]].body  # never crosses a section boundary
+        assert text[meta["offset"] :].startswith(body)
+    first_80c = next(c for c, m in chunks if m["section"] == "80C")
+    assert first_80c.startswith("Sample Taxation Act, 2025 | Section 80C: Deduction in respect of")
+
+
+def test_long_sections_split_into_overlapping_chunks_within_budget() -> None:
+    sentences = " ".join(
+        f"Clause {i} allows a deduction of the prescribed amount." for i in range(400)
+    )
+    text = f"§ 80C. Deduction in respect of life insurance premia.\n{sentences}\n"
+    chunks = chunk_document(text, ACT_META)
+    assert len(chunks) > 3
+    assert [m["chunk_no"] for _, m in chunks] == list(range(len(chunks)))
+    tokenizer = splitter()._tokenizer
+    assert all(len(tokenizer(c)) <= CHUNK_SIZE for c, _ in chunks)
+    offsets = [m["offset"] for _, m in chunks]
+    assert offsets == sorted(offsets)
+    bodies = [c.partition("\n\n")[2] for c, _ in chunks]
+    assert bodies[0][-40:] in bodies[1] or bodies[1][:40] in bodies[0]  # overlap
+
+
+@pytest.mark.parametrize(
+    ("name", "meta"),
+    [
+        ("sample_circular.pdf", CIRCULAR_META),
+        ("sample_notification.pdf", NOTIFICATION_META),
+        ("sample_act.pdf", ACT_META),
+    ],
+)
+def test_every_fixture_produces_chunks(name: str, meta: dict[str, str]) -> None:
+    text = "\n\n".join(clean_pages([p.text for p in load_pdf(FIXTURES / name)]))
+    chunks = chunk_document(text, meta)
+    assert len(chunks) > 0
+    assert all(c.startswith(contextual_header(m)) for c, m in chunks)
+
+
+def test_empty_text_has_no_chunks() -> None:
+    assert chunk_document("  \n ", CIRCULAR_META) == []
