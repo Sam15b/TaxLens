@@ -58,6 +58,7 @@ dev = [
     "mypy>=2.4,<3",
     "types-PyYAML>=6.0.12",
     "pre-commit>=4.7,<5",
+    "truststore>=0.10,<1",          # OS trust store for scripts/download_sources.py
 ]
 
 [tool.ruff]

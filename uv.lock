@@ -3063,6 +3063,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "ruff" },
+    { name = "truststore" },
     { name = "types-pyyaml" },
 ]
 
@@ -3116,6 +3117,7 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.4,<2" },
     { name = "pytest-cov", specifier = ">=7.1,<8" },
     { name = "ruff", specifier = ">=0.17,<1" },
+    { name = "truststore", specifier = ">=0.10,<1" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
 ]
 
