@@ -17,13 +17,18 @@ The code is a **skeleton**: it shows the shape and the key calls. Fill in the de
 
 ### Tasks
 
-- [ ] Scaffold the repo (doc 03), with `config.py`, `main.py` and `/health`
-- [ ] `storage/models.py` + `Repository` protocol + `sqlite_repo.py` + first Alembic migration
+> **Progress (2026-11-06):** sprint days 1–4 are done (PRs #1–#4). Ticked items are merged
+> into `main`; the rest start on day 5.
+
+- [x] Scaffold the repo (doc 03), with `config.py`, `main.py` and `/health`
+- [x] `storage/models.py` + `Repository` protocol + `sqlite_repo.py` + first Alembic migration
       (`users`, `workspaces`, `memberships`, `documents`, `audit_log`)
+- [x] Source corpus: `data/sources.yaml` + `scripts/download_sources.py` (sha256-verified)
 - [ ] Pinecone account + API key + `scripts/init_pinecone.py` (index `taxlens-dev`)
-- [ ] `ingestion/loaders.py`: PDF → pages, with low-text page detection
-- [ ] `ingestion/metadata.py`: regexes, plus unit tests on real snippets
-- [ ] `ingestion/chunking.py`: section-aware chunking with a contextual header
+- [x] `ingestion/loaders.py`: PDF → pages, with low-text page detection
+- [x] `ingestion/cleaning.py`: headers/footers, hyphenation, Hindi lines
+- [x] `ingestion/metadata.py`: regexes, plus unit tests on real snippets
+- [x] `ingestion/chunking.py`: section-aware chunking with a contextual header
 - [ ] `llm/embeddings.py` + `retrieval/pinecone_store.py` (upsert, hybrid search, delete by id prefix)
 - [ ] `scripts/seed_index.py`: ingest `data/raw` synchronously
 - [ ] `llm/providers.py`: Gemini + Groq + Ollama

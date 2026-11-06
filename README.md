@@ -10,8 +10,10 @@ Income-tax Acts (1961 and 2025), CBDT circulars and GST notifications, and every
 sources. It reviews uploaded client documents, and it masks personal data (PAN, Aadhaar, GSTIN,
 names, phone numbers) **before** any text reaches an LLM.
 
-> **Status:** 🚧 Sprint 1, in progress. Building the data layer, ingestion and hybrid retrieval
-> ([build guide](docs/04-build-guide.md#week-1--ingestion-hybrid-retrieval-ask)).
+> **Status:** 🚧 Sprint 1, day 4 of 6 done. Finished: tooling, the SQLite repository, the source
+> corpus and downloader, PDF loading and cleaning, metadata extraction, and section-aware chunking.
+> Next: embeddings and the Pinecone hybrid store
+> ([progress](docs/04-build-guide.md#week-1--ingestion-hybrid-retrieval-ask)).
 
 ## Why it's interesting
 
