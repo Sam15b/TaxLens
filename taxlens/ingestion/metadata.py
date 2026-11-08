@@ -23,11 +23,13 @@ NOTIFICATION_RE = re.compile(
 )
 
 # Act section heading at line start: "80C. Deduction in respect of ...". Lines the loader
-# verified from the page layout start with "§" (taxlens/ingestion/loaders.py).
+# verified from the page layout start with "§" (taxlens/ingestion/loaders.py). The Income-tax
+# Act, 1961 hyphenates some inserted sections: "194-IB.".
+_HEADING_NO = r"(\d{1,3}(?:-?[A-Z]{1,4})?)"
 SECTION_HEADING_RE = re.compile(
-    r"^[ \t]*(?:§[ \t]*)?(\d{1,3}[A-Z]{0,4})\.[ \t]+([A-Z][^\n]{3,200})$", re.M
+    rf"^[ \t]*(?:§[ \t]*)?{_HEADING_NO}\.[ \t]+([A-Z][^\n]{{3,200}})$", re.M
 )
-MARKED_HEADING_RE = re.compile(r"^[ \t]*§[ \t]*(\d{1,3}[A-Z]{0,4})\.[ \t]*([^\n]*)$", re.M)
+MARKED_HEADING_RE = re.compile(rf"^[ \t]*§[ \t]*{_HEADING_NO}\.[ \t]*([^\n]*)$", re.M)
 
 # A section number: digits, an optional capital suffix (80C, 80CCD, 194J) and optional
 # parenthesised parts (10(23C), 2(91)). Never followed by another digit, so years don't match.

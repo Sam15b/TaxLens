@@ -154,6 +154,17 @@ def test_schedules_are_headings_without_a_section_number() -> None:
     ]
 
 
+def test_hyphenated_section_numbers() -> None:
+    # Income-tax Act, 1961: sections inserted after 194-I are numbered "194-IA", "194-IB", ...
+    marked = "§ 194-IA. Payment on transfer of certain immovable property.\n(1) Any person\n"
+    inline = "194-IB. Payment of rent by certain individuals or Hindu undivided family.\n"
+    assert [(h.section_no, h.title) for h in find_section_headings(marked)] == [
+        ("194-IA", "Payment on transfer of certain immovable property.")
+    ]
+    assert [h.section_no for h in find_section_headings(inline)] == ["194-IB"]
+    assert find_section_headings("2024-25. The rates\n") == []  # a year range is no section
+
+
 def test_heading_regex_ignores_amounts_and_references() -> None:
     text = "the sum of Rs. 50,000.\nunder section 80C. The assessee\n2017. Notified\n"
     assert find_section_headings(text) == []
