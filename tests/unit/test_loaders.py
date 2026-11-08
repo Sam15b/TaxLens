@@ -98,3 +98,92 @@ def test_documents_without_margin_notes_have_no_marks() -> None:
     for name in ("sample_circular.pdf", "sample_notification.pdf"):
         pages = load_pdf(FIXTURES / name)
         assert all(not p.headings and SECTION_MARK not in p.text for p in pages)
+
+
+def make_glyph_coded_pdf(path: Path, codes: bytes, differences: str, *, named: bool) -> Path:
+    """A page drawn with a Type3 font whose glyphs are named ``/c<code>`` and that has no
+    ToUnicode map, like the official Income-tax Act, 1961 PDF (PageMaker + Distiller)."""
+    doc = pymupdf.open()
+    page = doc.new_page()
+    names = differences.replace("/", " /").split()[1:]
+    glyph = doc.get_new_xref()
+    doc.update_object(glyph, "<<>>")
+    doc.update_stream(glyph, b"500 0 d0")  # an empty glyph: only the codes matter here
+    procs = doc.get_new_xref()
+    doc.update_object(procs, "<<" + "".join(f"{n} {glyph} 0 R" for n in names) + ">>")
+    font = doc.get_new_xref()
+    doc.update_object(
+        font,
+        "<</Type/Font/Subtype/Type3" + ("/Name/T4" if named else "") + "/FontBBox[0 0 500 700]"
+        f"/FontMatrix[.001 0 0 .001 0 0]/CharProcs {procs} 0 R"
+        f"/Encoding<</Type/Encoding/Differences[{differences}]>>"
+        f"/FirstChar 0/LastChar {len(names) - 1}/Widths[{' '.join(['500'] * len(names))}]"
+        "/Resources<<>>>>",
+    )
+    doc.xref_set_key(page.xref, "Resources", f"<</Font<</F1 {font} 0 R>>>>")
+    contents = doc.get_new_xref()
+    doc.update_object(contents, "<<>>")
+    doc.update_stream(contents, b"BT /F1 12 Tf 72 720 Td <" + codes.hex().encode() + b"> Tj ET")
+    doc.xref_set_key(page.xref, "Contents", f"{contents} 0 R")
+    doc.save(path)
+    doc.close()
+    return path
+
+
+@pytest.mark.parametrize("named", [True, False])
+def test_glyph_coded_type3_text_is_decoded(tmp_path: Path, named: bool) -> None:
+    # codes 0..6 -> /c72 "H", /c101 "e", /c108 "l", /c111 "o", /c32 " ", /c33 "!", /c147 "“"
+    path = make_glyph_coded_pdf(
+        tmp_path / "t3.pdf",
+        bytes([6, 0, 1, 2, 2, 3, 4, 5]),
+        "0/c72/c101/c108/c111/c32/c33/c147",  # unspaced names, as in the real file
+        named=named,
+    )
+    assert pymupdf.open(path)[0].get_text().startswith("\x06\x00\x01")  # PyMuPDF alone: codes
+    assert load_pdf(path)[0].text == "“Hello !\n"
+
+
+def test_type3_fonts_with_real_glyph_names_are_left_alone(tmp_path: Path) -> None:
+    path = make_glyph_coded_pdf(tmp_path / "t3.pdf", bytes([0, 1]), "0/H/i", named=True)
+    assert load_pdf(path)[0].text == "Hi\n"  # PyMuPDF maps standard names itself
+
+
+def _write_line(page: pymupdf.Page, y: float, parts: list[tuple[str, str]]) -> None:
+    x = 72.0
+    for text, font in parts:
+        page.insert_text((x, y), text, fontname=font, fontsize=10)
+        x += pymupdf.get_text_length(text, fontname=font, fontsize=10)
+
+
+def test_bold_headings_above_sections_become_marked_headings(tmp_path: Path) -> None:
+    # Income-tax Act, 1961 layout: the heading is printed above the section, in the number's font
+    doc = pymupdf.open()
+    page = doc.new_page()
+    bold, body = "hebo", "helv"
+    _write_line(page, 100, [("Payment of rent by certain individuals.", bold)])
+    _write_line(page, 113, [("194-IB.", bold), (" (1) Any person shall deduct tax.", body)])
+    _write_line(page, 140, [("Fees for professional or technical", bold)])  # wraps
+    _write_line(page, 152, [("services.", bold)])
+    _write_line(page, 165, [("194J.", bold)])  # the number alone, text on the next line
+    _write_line(page, 177, [("(1) Any person paying fees shall deduct tax.", body)])
+    _write_line(page, 200, [("2. A bold numbered paragraph, not a section.", bold)])
+    _write_line(page, 213, [("(a) a clause in body text.", body)])
+    _write_line(page, 240, [("Numbered paragraph in body font.", body)])
+    _write_line(page, 253, [("3.", body)])  # the page's body font: a list item, not a section
+    _write_line(page, 266, [("Explanation.", "heit")])
+    filler = "and the tax so deducted shall be paid to the credit"
+    for i in range(6):  # most of a real page is body text
+        _write_line(page, 290 + 13 * i, [(filler, body)])
+    doc.save(tmp_path / "act.pdf")
+    doc.close()
+
+    loaded = load_pdf(tmp_path / "act.pdf")[0]
+    assert loaded.headings == (
+        ("194-IB", "Payment of rent by certain individuals."),
+        ("194J", "Fees for professional or technical services."),
+    )
+    assert f"{SECTION_MARK} 194-IB. Payment of rent by certain individuals.\n" in loaded.text
+    assert "\n(1) Any person paying fees shall deduct tax." in loaded.text
+    assert "Fees for professional or technical\n" not in loaded.text  # moved, not duplicated
+    assert "\n2. A bold numbered paragraph, not a section." in loaded.text
+    assert "Numbered paragraph in body font.\n3.\n" in loaded.text
