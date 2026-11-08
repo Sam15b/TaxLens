@@ -25,7 +25,7 @@
   act: Income-tax Act, 1961
   url: https://www.incometaxindia.gov.in/documents/d/guest/income_tax_act_1961_as_amended_by_fa_act_2026-1-pdf
   manual: true
-  sha256: null
+  sha256: ecdd7ea6ef58415848a0bca8f88854c23f52dcb830e9ce7eb42b4520f30db2fc
 
 - id: cgst-act-2017
   title: Central Goods and Services Tax Act, 2017
@@ -44,7 +44,7 @@
   issued_on: 2025-02-20
   url: https://www.incometaxindia.gov.in/w/circular-no.-3/2025-income-tax-deduction-from-salaries-during-the-financial-year-2024-25-under-section-192-of-the-income-tax-act-1961
   manual: true
-  sha256: null
+  sha256: c69e098e34a32236d035bfcf093ef55f766407bc41c0c74e0f7cd97cdd2e4c09
 
 - id: cbdt-circular-2025-05
   title: CBDT Circular No. 5/2025 - waiver of interest u/s 201(1A)(ii) / 206C(7)
@@ -54,7 +54,7 @@
   issued_on: 2025-03-28
   url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
   manual: true
-  sha256: null
+  sha256: 221325e846062caa658d95be7679c1e79e556aa9dfbdc64cc0cb2a31e5cd514d
 
 - id: cbdt-circular-2025-08
   title: CBDT Circular No. 8/2025 - clarification on Circular No. 5/2025 (interest u/s 201(1A)(ii) / 206C(7))
@@ -64,7 +64,7 @@
   issued_on: null
   url: https://www.incometaxindia.gov.in/w/circular-no.-8/2025-clarification-regarding-cbdt-s-circular-no.-5/2025-dated-28.03.2025-for-waiver-on-levy-of-interest-under-section-201-1a-ii-/-206c-7-of-the-income-tax-act-1961-as-the-case-may-be-in-specific-cases
   manual: true
-  sha256: null
+  sha256: 8c326e445f2ccb1ee7a70cae65c4ba573ad28dc7bd9c425b8ad99ca564fd75b3
 
 - id: cbdt-circular-2025-09
   title: CBDT Circular No. 9/2025 - TDS/TCS relief where PAN was inoperative (rule 114AAA)
@@ -74,7 +74,7 @@
   issued_on: 2025-07-21
   url: https://www.incometaxindia.gov.in/pages/communications/circulars.aspx
   manual: true
-  sha256: null
+  sha256: e94530d9a72491585608e568d148d47acb80d27aa8d6dadc5c281b803f66235d
 
 - id: cbdt-circular-2026-02
   title: CBDT Circular No. 2/2026 - extension of time for TDS certificates u/s 203 (quarter ending 31.12.2025)
@@ -84,7 +84,7 @@
   issued_on: null
   url: https://www.incometaxindia.gov.in/w/circular-no.-2/2026-order-under-section-119-of-the-income-tax-act-1961-for-extension-of-timeline-for-issuance-of-tax-deducted-at-source-tds-certificate-under-section-203-of-the-act-for-the-quarter-ending-31st-december-2025
   manual: true
-  sha256: null
+  sha256: f9f2c1a621f743482efc3d33433729a6c4892ada845c0a1126ee6252abce50f7
 
 # ── GST: Central Tax (Rate) notifications ────────────────────────────────────
 - id: cgst-notif-01-2017-rate
