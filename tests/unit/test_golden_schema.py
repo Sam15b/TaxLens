@@ -73,6 +73,7 @@ def test_bad_sources(source: dict[str, str]) -> None:
 
 
 def test_must_include_ignores_rupee_signs_commas_and_case() -> None:
+    assert normalise("within two years, Rs.5,000") == "within two years, 5000"
     assert (
         normalise("₹1,50,000 Per Year") == normalise("Rs. 150000 per   year") == "150000 per year"
     )

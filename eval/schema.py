@@ -49,7 +49,7 @@ class ExpectedSource(BaseModel):
 
 def normalise(text: str) -> str:
     """For ``must_include`` checks: case, ₹/Rs., commas and spacing don't matter."""
-    text = text.lower().replace("₹", " ").replace("rs.", " ").replace("rs ", " ")
+    text = re.sub(r"\brs\b\.?", " ", text.lower().replace("₹", " "))  # not the "rs" in "years"
     text = re.sub(r"(?<=\d),(?=\d)", "", text)
     return re.sub(r"\s+", " ", text).strip()
 
