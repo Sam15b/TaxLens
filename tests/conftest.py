@@ -11,6 +11,7 @@ import pytest
 
 from taxlens.storage.base import Repository
 from taxlens.storage.sqlite_repo import SqliteRepository
+from tests.fakes import FakeVectorStore
 
 REPOSITORY_BACKENDS = ["sqlite"]
 
@@ -23,3 +24,8 @@ def repo(request: pytest.FixtureRequest, tmp_path: Path) -> Iterator[Repository]
         sqlite_repo.dispose()
     else:  # pragma: no cover - future backends
         pytest.skip(f"backend {request.param} not available")
+
+
+@pytest.fixture
+def vector_store() -> FakeVectorStore:
+    return FakeVectorStore()

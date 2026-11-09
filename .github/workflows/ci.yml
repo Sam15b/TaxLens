@@ -28,6 +28,10 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --frozen          # exact versions from uv.lock
+      - uses: actions/cache@v4         # FastEmbed ONNX models for the `slow` tests
+        with:
+          path: .models
+          key: fastembed-${{ hashFiles('taxlens/config.py') }}
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy taxlens
