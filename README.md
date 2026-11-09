@@ -15,7 +15,8 @@ names, phone numbers) **before** any text reaches an LLM.
 > RRF section boost), a Gemini → Groq LLM factory, and `POST /ask`, which answers with validated
 > `[S#]` citations or "not found". Sprint 2, days 7–8: the LangGraph router (qa / calc / refuse)
 > with guards and a citation retry loop, and a deterministic FY 2025-26 tax calculator (the LLM
-> only extracts the inputs). Next: the golden eval set
+> only extracts the inputs). Day 9: the first 55 golden eval questions, each checked against the
+> source text. Next: the rest of the golden set and the evaluators
 > ([progress](docs/04-build-guide.md#week-2--router-calculator-golden-set-langsmith-phoenix)).
 
 ## Why it's interesting
