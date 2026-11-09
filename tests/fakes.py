@@ -145,8 +145,16 @@ def wire_qa(
     def vector(text: str) -> list[float]:
         return [1.0, 0.0] if ("fee" in text.lower() or "tds" in text.lower()) else [0.0, 1.0]
 
+    from decimal import Decimal
+
+    from langchain_core.runnables import RunnableLambda
+
+    from taxlens.agent.nodes import calc
+
+    extraction = calc.CalcExtraction(gross_income=Decimal(1_400_000))
     fixed = FixedRouter(route)
     monkeypatch.setattr(router, "get_router_llm", lambda: fixed)
+    monkeypatch.setattr(calc, "get_extractor", lambda: RunnableLambda(lambda _: extraction))
     monkeypatch.setattr(qa, "get_store", lambda: store)
     monkeypatch.setattr(qa, "get_query_vector", vector)
     monkeypatch.setattr(qa, "get_llm", lambda: llm)
