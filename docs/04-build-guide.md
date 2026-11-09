@@ -358,7 +358,11 @@ are clean.
 
 ### Tasks
 
+> **Progress (2026-11-10):** Sprint 2 day 7 is done. The graph has its full shape (guards,
+> router, retry loop, NOT_FOUND exit) and every path is tested. `calc` is a stub until day 8.
+
 - [ ] Full LangGraph: `input_guard` (stub), `route`, `calc`, retry loop on bad citations
+      (all but the real `calc` node are done)
 - [ ] `tools/tax_calculator.py` + YAML rules + 25+ unit tests
 - [ ] Golden set v1: 100 questions (see [Evaluation](06-evaluation.md))
 - [ ] `eval/run_eval.py` + evaluators, with results stored as JSON

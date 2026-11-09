@@ -1,4 +1,11 @@
-"""Document review: classify type, retrieve provisions, return findings with citations.
+"""Review mode: findings on an uploaded client document. Stub until week 3."""
 
-TODO: implement. See docs/05-api-reference.md § 5.5.
-"""
+from typing import Any
+
+from taxlens.agent.state import TaxLensState
+
+NOT_AVAILABLE = "Document review is not available yet."
+
+
+def run(state: TaxLensState) -> dict[str, Any]:
+    return {"answer": NOT_AVAILABLE, "findings": [], "cited": []}

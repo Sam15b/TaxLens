@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from taxlens.agent.graph import MAX_ATTEMPTS, build_graph
-from taxlens.agent.prompts import NOT_FOUND, RETRY_HINT
+from taxlens.agent.prompts import DISCLAIMER, NOT_FOUND, REFUSAL, RETRY_HINT
 from tests.fakes import FakeVectorStore, ScriptedChatModel, corpus_chunks, wire_qa
 
 CITED = "Section 194J of the Income-tax Act, 1961 requires TDS at 10% on professional fees [S1]."
@@ -70,3 +70,105 @@ def test_no_hits_skips_the_llm(monkeypatch: pytest.MonkeyPatch, store: FakeVecto
     wire_qa(monkeypatch, store, llm)
     out = ask("TDS on fees?", workspaces=["empty-workspace"])
     assert (out["answer"], out["citations"]) == (NOT_FOUND, []) and llm.prompts == []
+
+
+def test_masked_question_is_what_leaves_the_process(
+    monkeypatch: pytest.MonkeyPatch, store: FakeVectorStore
+) -> None:
+    from taxlens.agent.nodes import qa
+
+    llm = ScriptedChatModel(CITED)
+    wire_qa(monkeypatch, store, llm)
+    state: dict[str, Any] = {
+        "question": "TDS on fees paid by ABCDE1234F?",
+        "masked_question": "TDS on fees paid by <IN_PAN_1>?",  # as the day-14 guard will set it
+        "workspace_ids": ["public"],
+    }
+    state |= qa.retrieve(state)  # type: ignore[arg-type]
+    state |= qa.generate(state)  # type: ignore[arg-type]
+    human = llm.prompts[0][1].content
+    assert "<IN_PAN_1>" in human and "ABCDE1234F" not in human
+
+
+def test_refuse_route_answers_politely_without_the_answer_model(
+    monkeypatch: pytest.MonkeyPatch, store: FakeVectorStore
+) -> None:
+    llm = ScriptedChatModel()
+    router = wire_qa(monkeypatch, store, llm, route="refuse")
+    out = ask("Write me a poem about cricket.")
+    assert out["answer"] == REFUSAL and out["citations"] == [] and out["disclaimer"] == DISCLAIMER
+    assert router.calls == 1 and llm.prompts == []
+
+
+def test_output_guard_maps_refs_to_citations_and_drops_bad_ones() -> None:
+    from taxlens.agent.nodes.guards import output_guard
+    from taxlens.retrieval.base import SearchHit
+
+    hits = [
+        SearchHit(
+            f"d#{i:05d}", "d", "text", 1.0, {"doc_type": "act", "act": "A", "section": str(i)}
+        )
+        for i in range(2)
+    ]
+    out = output_guard({"route": "qa", "hits": hits, "cited": [2, 7]})
+    assert [c["chunk_id"] for c in out["citations"]] == ["d#00001"]
+    assert out["citations"][0]["ref"] == "S2" and out["citations"][0]["title"] == "A — s. 1"
+    assert out["disclaimer"] == DISCLAIMER
+
+
+UNCITED = "TDS is 10% on professional fees."
+QA_START = ["input_guard", "route", "retrieve"]
+
+
+@pytest.mark.parametrize(
+    ("name", "mode", "route", "replies", "workspaces", "path"),
+    [
+        ("qa-ok", "ask", "qa", [CITED], None, [*QA_START, "generate", "check_citations"]),
+        (
+            "qa-retry-ok",
+            "ask",
+            "qa",
+            [UNCITED, CITED],
+            None,
+            [*QA_START, "generate", "check_citations", "generate", "check_citations"],
+        ),
+        (
+            "qa-fail",
+            "ask",
+            "qa",
+            [UNCITED, UNCITED],
+            None,
+            [*QA_START, "generate", "check_citations", "generate", "check_citations", "not_found"],
+        ),
+        ("qa-no-hits", "ask", "qa", [], ["nobody"], [*QA_START, "not_found"]),
+        ("calc", "ask", "calc", [], None, ["input_guard", "route", "calc"]),
+        ("review", "review", "qa", [], None, ["input_guard", "route", "review"]),
+        ("refuse", "ask", "refuse", [], None, ["input_guard", "route"]),
+    ],
+)
+def test_every_graph_path(
+    monkeypatch: pytest.MonkeyPatch,
+    store: FakeVectorStore,
+    name: str,
+    mode: str,
+    route: str,
+    replies: list[str],
+    workspaces: list[str] | None,
+    path: list[str],
+) -> None:
+    llm = ScriptedChatModel(*replies)
+    router = wire_qa(monkeypatch, store, llm, route=route)
+    state = {
+        "mode": mode,
+        "question": "TDS on professional fees?",
+        "workspace_ids": workspaces or ["public"],
+    }
+    visited, final = [], {}
+    for update in build_graph().stream(state, stream_mode="updates"):
+        for node, values in update.items():
+            visited.append(node)
+            final.update(values or {})
+    assert visited == [*path, "output_guard"], name
+    assert llm.replies == []  # every scripted reply was used, and no more
+    assert router.calls == (0 if mode == "review" else 1)
+    assert final["disclaimer"] == DISCLAIMER

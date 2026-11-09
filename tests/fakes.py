@@ -121,13 +121,33 @@ def corpus_chunks() -> list[ChunkRecord]:
     ]
 
 
-def wire_qa(monkeypatch: Any, store: FakeVectorStore, llm: ScriptedChatModel) -> None:
-    """Point the QA nodes at fakes: 'fee'/'TDS' questions embed near 194J, others near 80C."""
-    from taxlens.agent.nodes import qa
+class FixedRouter:
+    """A structured router model that always decides ``route`` and counts its calls."""
+
+    def __init__(self, route: str) -> None:
+        self.route = route
+        self.calls = 0
+
+    def invoke(self, prompt: Any, *args: Any, **kwargs: Any) -> Any:
+        from taxlens.agent.nodes.router import RouteDecision
+
+        self.calls += 1
+        return RouteDecision(route=self.route, reason="test")  # type: ignore[arg-type]
+
+
+def wire_qa(
+    monkeypatch: Any, store: FakeVectorStore, llm: ScriptedChatModel, route: str = "qa"
+) -> FixedRouter:
+    """Point the graph at fakes: the router decides ``route``; 'fee'/'TDS' questions embed near
+    194J, others near 80C."""
+    from taxlens.agent.nodes import qa, router
 
     def vector(text: str) -> list[float]:
         return [1.0, 0.0] if ("fee" in text.lower() or "tds" in text.lower()) else [0.0, 1.0]
 
+    fixed = FixedRouter(route)
+    monkeypatch.setattr(router, "get_router_llm", lambda: fixed)
     monkeypatch.setattr(qa, "get_store", lambda: store)
     monkeypatch.setattr(qa, "get_query_vector", vector)
     monkeypatch.setattr(qa, "get_llm", lambda: llm)
+    return fixed
