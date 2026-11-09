@@ -78,6 +78,20 @@ The judge uses a **different model** from the answer model (`JUDGE_PROVIDER`), a
 
 ## 6.3 Running evals
 
+The local runner is built (day 10):
+
+```powershell
+uv run python -m eval.validate_golden                          # 100 rows, 7 categories
+uv run python -m eval.run_eval --subset ci                     # graph + Pinecone + LLM judge
+uv run python -m eval.run_eval --subset all --out eval/results.json
+uv run python -m eval.run_eval --local-index --retrieval-only  # offline: no keys needed
+```
+
+`--local-index` searches an in-memory **dense-only** index built from `data/raw` (cached in
+`var/`), and `--retrieval-only` scores retrieval without calling an LLM. Together they give a
+retrieval baseline with no keys at all. The LangSmith path below (`--langsmith`) comes with the
+experiments.
+
 ```python
 # eval/run_eval.py (sketch)
 import argparse, json
