@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     judge_provider: Provider = "groq"  # eval judge must differ from the answer model
     judge_model: str = "llama-3.3-70b-versatile"
     ollama_base_url: str = "http://localhost:11434"
+    google_api_key: SecretStr | None = None  # Gemini API
+    groq_api_key: SecretStr | None = None
+    llm_timeout_seconds: float = 60.0
+    llm_max_retries: int = 2  # per provider, before the fallback is tried
 
     # ── Embeddings (local, FastEmbed) ────────────────────────────────
     embedding_model: str = "BAAI/bge-small-en-v1.5"
