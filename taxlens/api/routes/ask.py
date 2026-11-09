@@ -11,7 +11,13 @@ from fastapi import APIRouter
 from taxlens.agent.citations import is_not_found
 from taxlens.agent.graph import get_graph
 from taxlens.agent.prompts import PROMPT_VERSION
-from taxlens.api.schemas import AskRequest, AskResponse, CitationOut, ErrorResponse
+from taxlens.api.schemas import (
+    AskRequest,
+    AskResponse,
+    CitationOut,
+    ErrorResponse,
+    TaxResultOut,
+)
 from taxlens.llm.providers import model_name
 from taxlens.storage.models import PUBLIC_WORKSPACE_ID
 
@@ -22,7 +28,8 @@ def to_response(result: dict[str, Any]) -> AskResponse:
     answer = result.get("answer", "")
     route = result.get("route", "qa")
     citations = [CitationOut.model_validate(c) for c in result.get("citations") or []]
-    calculation = result.get("calculation")
+    raw = result.get("calculation")
+    calculation = TaxResultOut.model_validate(raw) if raw is not None else None
     if route == "calc":
         found = calculation is not None
     else:

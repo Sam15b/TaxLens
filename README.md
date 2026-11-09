@@ -13,8 +13,9 @@ names, phone numbers) **before** any text reaches an LLM.
 > **Status:** 🚧 Sprint 1 done ([retro](docs/retros/sprint-1.md)). Finished: ingestion of the
 > public corpus (Acts, circulars, GST notifications) into a Pinecone hybrid index (BGE + SPLADE,
 > RRF section boost), a Gemini → Groq LLM factory, and `POST /ask`, which answers with validated
-> `[S#]` citations or "not found". Sprint 2, day 7: the LangGraph router (qa / calc / refuse) with
-> guards and a citation retry loop. Next: the tax calculator and the eval set
+> `[S#]` citations or "not found". Sprint 2, days 7–8: the LangGraph router (qa / calc / refuse)
+> with guards and a citation retry loop, and a deterministic FY 2025-26 tax calculator (the LLM
+> only extracts the inputs). Next: the golden eval set
 > ([progress](docs/04-build-guide.md#week-2--router-calculator-golden-set-langsmith-phoenix)).
 
 ## Why it's interesting

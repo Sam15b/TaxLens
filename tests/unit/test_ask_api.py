@@ -91,3 +91,46 @@ def test_no_llm_provider_is_a_503_envelope(
             "request_id": "req-1",
         }
     }
+
+
+def test_calc_route_returns_the_calculation(
+    client: TestClient, store: FakeVectorStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    wire_qa(monkeypatch, store, ScriptedChatModel(), route="calc")  # extracts ₹14 lakh salary
+    r = client.post("/ask", json={"question": "Salary 14 lakh, new regime, FY 2025-26: tax?"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["route"] == "calc" and body["found"] is True and body["citations"] == []
+    calc = body["calculation"]
+    assert calc["total_tax"] == 81_900 and calc["taxable_income"] == 1_325_000
+    assert calc["regime"] == "new" and calc["rules_source"] == "Finance Act, 2025"
+    assert calc["breakdown"][-1] == {
+        "lower": 1_200_000,
+        "upper": 1_325_000,
+        "rate": 0.15,
+        "tax": 18_750,
+    }
+    assert "₹81,900" in body["answer"]
+
+
+def test_calc_clarification_is_not_found(
+    client: TestClient, store: FakeVectorStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from langchain_core.runnables import RunnableLambda
+
+    from taxlens.agent.nodes import calc
+
+    wire_qa(monkeypatch, store, ScriptedChatModel(), route="calc")
+    ask_back = calc.CalcExtraction(clarification="What is your annual income?")
+    monkeypatch.setattr(calc, "get_extractor", lambda: RunnableLambda(lambda _: ask_back))
+    body = client.post("/ask", json={"question": "How much tax do I pay?"}).json()
+    assert (body["route"], body["found"], body["calculation"]) == ("calc", False, None)
+    assert body["answer"] == "What is your annual income?"
+
+
+def test_refuse_route(
+    client: TestClient, store: FakeVectorStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    wire_qa(monkeypatch, store, ScriptedChatModel(), route="refuse")
+    body = client.post("/ask", json={"question": "Write a poem"}).json()
+    assert (body["route"], body["found"], body["citations"]) == ("refuse", False, [])

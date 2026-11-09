@@ -1,7 +1,7 @@
 """Request and response models (docs/05-api-reference.md § 5.8)."""
 
 from datetime import date
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -37,6 +37,30 @@ class CitationOut(BaseModel):
     source_url: str | None = None
 
 
+class SlabRowOut(BaseModel):
+    lower: int
+    upper: int
+    rate: float  # 0.15 = 15%
+    tax: int
+
+
+class TaxResultOut(BaseModel):
+    """The calculator's result, in whole rupees (amounts are already rounded)."""
+
+    tax_year: str
+    regime: Literal["new", "old"]
+    gross_income: int
+    standard_deduction: int
+    deductions: int
+    taxable_income: int
+    tax_before_rebate: int
+    rebate: int
+    cess: int
+    total_tax: int
+    rules_source: str
+    breakdown: list[SlabRowOut]
+
+
 class AskResponse(BaseModel):
     answer: str
     route: Literal["qa", "calc", "refuse"]
@@ -46,7 +70,7 @@ class AskResponse(BaseModel):
     trace_id: str | None = None
     prompt_version: str
     model: str
-    calculation: dict[str, Any] | None = None
+    calculation: TaxResultOut | None = None  # route "calc" only
 
 
 class ErrorBody(BaseModel):
