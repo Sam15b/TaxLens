@@ -166,3 +166,9 @@ def test_unanswerable_rows_are_not_judged(monkeypatch: pytest.MonkeyPatch) -> No
 
     monkeypatch.setattr(ev, "get_judge", no_judge)
     assert ev.answer_correctness(out(NOT_FOUND), UNANSWERABLE)["score"] is None
+
+
+def test_keys_map_every_evaluator() -> None:
+    for fn in [*ev.DETERMINISTIC, ev.answer_correctness]:
+        ref = UNANSWERABLE if fn is ev.answer_correctness else ACT_REF
+        assert ev.KEYS[fn.__name__] == fn(out(), ref)["key"]

@@ -164,3 +164,16 @@ def answer_correctness(outputs: dict[str, Any], reference_outputs: dict[str, Any
     except (ValueError, ValidationError) as exc:
         return {"key": "answer_correctness", "score": None, "comment": f"unparseable: {exc}"}
     return {"key": "answer_correctness", "score": float(verdict.score), "comment": verdict.reason}
+
+
+# The key each evaluator reports, for when it can't run (e.g. the target raised).
+KEYS: dict[str, str] = {
+    "hit_at_5": "hit@5",
+    "retrieval_mrr": "retrieval_mrr",
+    "citation_precision": "citation_precision",
+    "citation_validity": "citation_validity",
+    "must_include": "must_include_rate",
+    "refusal_correct": "refusal_accuracy",
+    "calc_exact": "calc_exact",
+    "answer_correctness": "answer_correctness",
+}
