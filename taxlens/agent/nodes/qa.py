@@ -85,13 +85,12 @@ def check_citations(state: TaxLensState) -> dict[str, Any]:
     hits = state["hits"]
     ok, refs = validate(state["answer"], len(hits))
     if not ok:
-        return {"cited": None, "citations": [], "error": "invalid citations"}
+        return {"cited": None, "error": "invalid citations"}
     if is_not_found(state["answer"]):
-        return {"answer": NOT_FOUND, "cited": [], "citations": [], "error": None}
-    citations = [citation_for(r, hits[r - 1]) for r in refs]
-    return {"cited": refs, "citations": citations, "error": None}
+        return {"answer": NOT_FOUND, "cited": [], "error": None}
+    return {"cited": refs, "error": None}  # output_guard turns these into citations
 
 
 def not_found(state: TaxLensState) -> dict[str, Any]:
     """The exit when retrieval finds nothing or citations keep failing: no unsupported claims."""
-    return {"answer": NOT_FOUND, "cited": [], "citations": [], "error": None}
+    return {"answer": NOT_FOUND, "cited": [], "error": None}

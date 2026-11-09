@@ -1,4 +1,11 @@
-"""Extract TaxInput with structured output, then call tools.tax_calculator.
+"""Calc route: income-tax computation. Stub until the calculator lands on day 8."""
 
-TODO: implement. See docs/04-build-guide.md Week 2.
-"""
+from typing import Any
+
+from taxlens.agent.state import TaxLensState
+
+NOT_AVAILABLE = "Income-tax computation is not available yet."
+
+
+def run(state: TaxLensState) -> dict[str, Any]:
+    return {"answer": NOT_AVAILABLE, "calculation": None, "cited": []}
