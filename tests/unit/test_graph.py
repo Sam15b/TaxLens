@@ -114,3 +114,61 @@ def test_output_guard_maps_refs_to_citations_and_drops_bad_ones() -> None:
     assert [c["chunk_id"] for c in out["citations"]] == ["d#00001"]
     assert out["citations"][0]["ref"] == "S2" and out["citations"][0]["title"] == "A — s. 1"
     assert out["disclaimer"] == DISCLAIMER
+
+
+UNCITED = "TDS is 10% on professional fees."
+QA_START = ["input_guard", "route", "retrieve"]
+
+
+@pytest.mark.parametrize(
+    ("name", "mode", "route", "replies", "workspaces", "path"),
+    [
+        ("qa-ok", "ask", "qa", [CITED], None, [*QA_START, "generate", "check_citations"]),
+        (
+            "qa-retry-ok",
+            "ask",
+            "qa",
+            [UNCITED, CITED],
+            None,
+            [*QA_START, "generate", "check_citations", "generate", "check_citations"],
+        ),
+        (
+            "qa-fail",
+            "ask",
+            "qa",
+            [UNCITED, UNCITED],
+            None,
+            [*QA_START, "generate", "check_citations", "generate", "check_citations", "not_found"],
+        ),
+        ("qa-no-hits", "ask", "qa", [], ["nobody"], [*QA_START, "not_found"]),
+        ("calc", "ask", "calc", [], None, ["input_guard", "route", "calc"]),
+        ("review", "review", "qa", [], None, ["input_guard", "route", "review"]),
+        ("refuse", "ask", "refuse", [], None, ["input_guard", "route"]),
+    ],
+)
+def test_every_graph_path(
+    monkeypatch: pytest.MonkeyPatch,
+    store: FakeVectorStore,
+    name: str,
+    mode: str,
+    route: str,
+    replies: list[str],
+    workspaces: list[str] | None,
+    path: list[str],
+) -> None:
+    llm = ScriptedChatModel(*replies)
+    router = wire_qa(monkeypatch, store, llm, route=route)
+    state = {
+        "mode": mode,
+        "question": "TDS on professional fees?",
+        "workspace_ids": workspaces or ["public"],
+    }
+    visited, final = [], {}
+    for update in build_graph().stream(state, stream_mode="updates"):
+        for node, values in update.items():
+            visited.append(node)
+            final.update(values or {})
+    assert visited == [*path, "output_guard"], name
+    assert llm.replies == []  # every scripted reply was used, and no more
+    assert router.calls == (0 if mode == "review" else 1)
+    assert final["disclaimer"] == DISCLAIMER
