@@ -91,6 +91,7 @@ markers = [
     "integration: needs Azurite and a Pinecone API key (uses a throwaway namespace)",
     "cosmos: needs the Cosmos DB emulator (docker compose --profile cosmos up -d)",
     "eval: calls real LLMs; run only in the eval job",
+    "slow: loads a local ONNX model (downloaded to .models/ on first use)",
 ]
 addopts = "-m 'not eval and not integration and not cosmos' --import-mode=importlib"
 asyncio_default_fixture_loop_scope = "function"

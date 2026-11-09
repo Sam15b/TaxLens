@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384
     sparse_model: str = "prithivida/Splade_PP_en_v1"
+    fastembed_cache_path: str = ".models"  # ONNX model files, downloaded on first use
 
     # ── Vector store (Pinecone Starter plan) ─────────────────────────
     vector_backend: Literal["pinecone", "qdrant", "oracle"] = "pinecone"
