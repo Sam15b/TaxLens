@@ -11,10 +11,16 @@ The same functions run in the local runner (eval/run_eval.py) and in LangSmith e
 See docs/06-evaluation.md § 6.2.
 """
 
+import json
+import re
 from typing import Any
 
+from pydantic import BaseModel, ValidationError, field_validator
+
+from eval.prompts import JUDGE_PROMPT
 from eval.schema import normalise
 from taxlens.agent.citations import CITE_RE, is_not_found
+from taxlens.agent.nodes.qa import message_text
 
 Result = dict[str, Any]
 TOP_K = 5
@@ -110,3 +116,51 @@ DETERMINISTIC = [
     refusal_correct,
     calc_exact,
 ]
+
+
+# ── LLM judge ────────────────────────────────────────────────────────────────
+
+
+class Judgement(BaseModel):
+    score: float
+    reason: str = ""
+
+    @field_validator("score")
+    @classmethod
+    def _graded(cls, value: float) -> float:
+        if value not in (0, 0.5, 1):
+            raise ValueError(f"score must be 0, 0.5 or 1, got {value}")
+        return value
+
+
+def get_judge() -> Any:
+    """The judge model: JUDGE_PROVIDER / JUDGE_MODEL, a different model from the answerer."""
+    from taxlens.llm.providers import get_judge_model
+
+    return get_judge_model()
+
+
+def parse_judgement(text: str) -> Judgement:
+    """The first JSON object in the judge's reply (models sometimes wrap it in prose or ```)."""
+    match = re.search(r"\{.*?\}", text, re.S)
+    if match is None:
+        raise ValueError(f"no JSON object in judge reply: {text[:200]!r}")
+    return Judgement.model_validate(json.loads(match[0]))
+
+
+def answer_correctness(outputs: dict[str, Any], reference_outputs: dict[str, Any]) -> Result:
+    """LLM judge: 1 / 0.5 / 0 against the reference answer. Unanswerable rows are scored by
+    refusal_accuracy instead; an unparseable judge reply scores None with a comment."""
+    if not reference_outputs.get("answerable") or not reference_outputs.get("expected_answer"):
+        return {"key": "answer_correctness", "score": None}
+    prompt = JUDGE_PROMPT.format(
+        question=reference_outputs.get("question", ""),
+        expected_answer=reference_outputs["expected_answer"],
+        answer=outputs.get("answer") or "",
+    )
+    reply = get_judge().invoke(prompt)
+    try:
+        verdict = parse_judgement(message_text(reply))
+    except (ValueError, ValidationError) as exc:
+        return {"key": "answer_correctness", "score": None, "comment": f"unparseable: {exc}"}
+    return {"key": "answer_correctness", "score": float(verdict.score), "comment": verdict.reason}

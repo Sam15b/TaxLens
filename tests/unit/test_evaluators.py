@@ -106,3 +106,63 @@ def test_calc_exact() -> None:
 def test_every_deterministic_evaluator_has_a_distinct_key() -> None:
     keys = [fn(out(), ACT_REF)["key"] for fn in ev.DETERMINISTIC]
     assert len(keys) == len(set(keys)) == 7
+
+
+# ── LLM judge, with a fake judge ─────────────────────────────────────────────
+
+
+class FakeJudge:
+    def __init__(self, reply: str) -> None:
+        self.reply = reply
+        self.prompts: list[str] = []
+
+    def invoke(self, prompt: str) -> Any:
+        from langchain_core.messages import AIMessage
+
+        self.prompts.append(prompt)
+        return AIMessage(content=self.reply)
+
+
+JUDGED: dict[str, Any] = {
+    **ACT_REF,
+    "question": "TDS rate on professional fees?",
+    "expected_answer": "10% above Rs 50,000.",
+}
+
+
+@pytest.mark.parametrize(
+    ("reply", "expected"),
+    [
+        ('{"score": 1, "reason": "Same facts."}', 1.0),
+        ('Here you go:\n```json\n{"score": 0.5, "reason": "Misses the threshold."}\n```', 0.5),
+        ('{"score": 0, "reason": "Wrong rate."}', 0.0),
+    ],
+)
+def test_answer_correctness_parses_the_judge(
+    monkeypatch: pytest.MonkeyPatch, reply: str, expected: float
+) -> None:
+    judge = FakeJudge(reply)
+    monkeypatch.setattr(ev, "get_judge", lambda: judge)
+    result = ev.answer_correctness(out("Deduct 10% above ₹50,000 [S2]."), JUDGED)
+    assert result["key"] == "answer_correctness" and result["score"] == expected
+    assert result["comment"]
+    prompt = judge.prompts[0]
+    assert "TDS rate on professional fees?" in prompt and "10% above Rs 50,000." in prompt
+    assert "Deduct 10% above ₹50,000 [S2]." in prompt and '{"score": 0|0.5|1' in prompt
+
+
+@pytest.mark.parametrize("reply", ["I think it is fine.", '{"score": 0.7}', '{"score": "high"}'])
+def test_unparseable_or_off_scale_judgements_score_none(
+    monkeypatch: pytest.MonkeyPatch, reply: str
+) -> None:
+    monkeypatch.setattr(ev, "get_judge", lambda: FakeJudge(reply))
+    result = ev.answer_correctness(out("x"), JUDGED)
+    assert result["score"] is None and result["comment"].startswith("unparseable")
+
+
+def test_unanswerable_rows_are_not_judged(monkeypatch: pytest.MonkeyPatch) -> None:
+    def no_judge() -> None:
+        raise AssertionError("the judge must not be called")
+
+    monkeypatch.setattr(ev, "get_judge", no_judge)
+    assert ev.answer_correctness(out(NOT_FOUND), UNANSWERABLE)["score"] is None
