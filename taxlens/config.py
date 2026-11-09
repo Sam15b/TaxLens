@@ -35,7 +35,11 @@ class Settings(BaseSettings):
 
     # ── Vector store (Pinecone Starter plan) ─────────────────────────
     vector_backend: Literal["pinecone", "qdrant", "oracle"] = "pinecone"
+    # Passed to the SDK explicitly: values in .env are not exported to the process environment.
+    pinecone_api_key: SecretStr | None = None
     pinecone_index: str = "taxlens-dev"
+    pinecone_cloud: str = "aws"  # the Starter plan offers one cloud/region
+    pinecone_region: str = "us-east-1"
     pinecone_namespace_prefix: str = ""  # CI sets "ci-<run_id>-"
     hybrid_alpha: float = 0.5  # 1 = dense only, 0 = sparse only
     retrieval_k: int = 8
