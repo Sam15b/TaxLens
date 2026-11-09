@@ -29,3 +29,17 @@ def test_input_defaults_and_validation() -> None:
         TaxInput(gross_income=Decimal(-1))
     with pytest.raises(ValidationError):
         TaxInput(gross_income=Decimal(1), tax_year="FY25")
+
+
+def test_salaried_12_75_lakh_new_regime_pays_nothing() -> None:
+    from taxlens.tools.tax_calculator import compute_tax
+
+    r = compute_tax(TaxInput(gross_income=Decimal(1_275_000)))
+    assert r.standard_deduction == 75_000 and r.taxable_income == 1_200_000
+    assert r.tax_before_rebate == 60_000 and r.rebate == 60_000 and r.total_tax == 0
+    assert [(row.lower, row.upper, row.rate, row.tax) for row in r.breakdown] == [
+        (0, 400_000, Decimal("0.00"), 0),
+        (400_000, 800_000, Decimal("0.05"), 20_000),
+        (800_000, 1_200_000, Decimal("0.10"), 40_000),
+    ]
+    assert r.rules_source == "Finance Act, 2025"

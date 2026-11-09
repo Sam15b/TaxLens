@@ -7,7 +7,7 @@ relief where the rules say so) and the 4% cess. Not covered yet (stretch issues)
 ₹50 lakh, special-rate income such as capital gains, senior-citizen slabs.
 """
 
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
@@ -75,3 +75,67 @@ def load_rules(tax_year: str) -> dict[str, Any]:
         )
     rules: dict[str, Any] = yaml.safe_load(path.read_text(encoding="utf-8"))
     return rules
+
+
+def _rupees(d: Decimal) -> Decimal:
+    return d.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+
+
+def _slab_tax(income: Decimal, slabs: list[list[Any]]) -> tuple[Decimal, list[SlabRow]]:
+    """Tax on ``income`` slab by slab, and one breakdown row per slab the income reaches."""
+    tax, lower, rows = Decimal(0), Decimal(0), []
+    for upper, rate in slabs:
+        if income <= lower:
+            break
+        top = income if upper is None else min(income, Decimal(upper))
+        part = (top - lower) * Decimal(str(rate))
+        rows.append(SlabRow(lower=lower, upper=top, rate=Decimal(str(rate)), tax=_rupees(part)))
+        tax += part
+        lower = top
+    return tax, rows
+
+
+def _rebate(tax: Decimal, taxable: Decimal, rule: dict[str, Any]) -> Decimal:
+    """Section 87A. Up to the threshold: the tax, capped at ``max_rebate``. Just above it, with
+    marginal relief: whatever keeps the tax from exceeding the income above the threshold."""
+    threshold = Decimal(rule["max_taxable_income"])
+    if taxable <= threshold:
+        return min(tax, Decimal(rule["max_rebate"]))
+    excess = taxable - threshold
+    if rule.get("marginal_relief") and tax > excess:
+        return tax - excess
+    return Decimal(0)
+
+
+def compute_tax(inp: TaxInput) -> TaxResult:
+    rules = load_rules(inp.tax_year)
+    r = rules["regimes"][inp.regime]
+    standard = Decimal(r["standard_deduction_salaried"]) if inp.is_salaried else Decimal(0)
+    standard = min(standard, inp.gross_income)
+    allowed = Decimal(0)
+    if inp.regime == "old":  # the new regime allows no Chapter VI-A deductions here
+        caps = r.get("deduction_caps", {})
+        allowed = sum(
+            (min(max(amount, Decimal(0)), Decimal(caps.get(name, amount)))
+             for name, amount in inp.deductions.items()),
+            Decimal(0),
+        )  # fmt: skip
+    taxable = max(inp.gross_income - standard - allowed, Decimal(0))
+    tax, rows = _slab_tax(taxable, r["slabs"])
+    rebate = _rebate(tax, taxable, r["rebate"])
+    after = tax - rebate
+    cess = after * Decimal(str(rules["cess_rate"]))
+    return TaxResult(
+        tax_year=inp.tax_year,
+        regime=inp.regime,
+        gross_income=_rupees(inp.gross_income),
+        standard_deduction=_rupees(standard),
+        deductions=_rupees(allowed),
+        taxable_income=_rupees(taxable),
+        tax_before_rebate=_rupees(tax),
+        rebate=_rupees(rebate),
+        cess=_rupees(cess),
+        total_tax=_rupees(after + cess),
+        rules_source=str(rules["source"]),
+        breakdown=rows,
+    )
