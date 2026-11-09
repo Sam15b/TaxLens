@@ -1,4 +1,4 @@
-# Golden-set ids in the fast CI subset (~40 by day 10). See docs/06-evaluation.md.
+# Golden-set ids in the fast CI subset (41 questions). See docs/06-evaluation.md.
 #
 # CI can only build its corpus from sources that download without a manual step (see `sources`
 # below). The Income-tax Act, 1961 and the CBDT circulars are hand-saved (`manual: true` in
@@ -25,6 +25,32 @@ ci:
   - q033
   - q034
   - q035
+  # gst_notification
+  - q056
+  - q057
+  - q059
+  - q060
+  - q061
+  - q062
+  - q063
+  - q068
+  - q070
+  - q071
+  - q073
+  - q074
+  # calc (no corpus needed)
+  - q076
+  - q077
+  - q082
+  - q083
+  # multi_hop within the CI corpus
+  - q086
+  - q091
+  # out_of_scope
+  - q093
+  - q096
+  - q097
+  - q099
 
 # Source documents the CI corpus is built from (ids in data/sources.yaml). Only entries that
 # download without a manual step, so CI never depends on a hand-saved file.
@@ -33,7 +59,12 @@ sources:
   ci:
     - ita-2025
     - cgst-act-2017
+    - cgst-notif-01-2017-rate
+    - cgst-notif-04-2017-rate
+    - cgst-notif-11-2017-rate
+    - cgst-notif-12-2017-rate
     - cgst-notif-13-2017-rate
     - cgst-notif-70-2019-ct
     - cgst-notif-13-2020-ct
+    - cgst-notif-05-2021-ct
     - cgst-notif-10-2023-ct
