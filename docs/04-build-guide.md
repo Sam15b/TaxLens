@@ -358,12 +358,12 @@ are clean.
 
 ### Tasks
 
-> **Progress (2026-11-10):** Sprint 2 day 7 is done. The graph has its full shape (guards,
-> router, retry loop, NOT_FOUND exit) and every path is tested. `calc` is a stub until day 8.
+> **Progress (2026-11-10):** Sprint 2 days 7–8 are done. The graph has its full shape (guards,
+> router, retry loop, NOT_FOUND exit, calc) and every path is tested. The FY 2025-26 rules were
+> checked against the Income Tax Department's slab table; 87A marginal relief is included.
 
-- [ ] Full LangGraph: `input_guard` (stub), `route`, `calc`, retry loop on bad citations
-      (all but the real `calc` node are done)
-- [ ] `tools/tax_calculator.py` + YAML rules + 25+ unit tests
+- [x] Full LangGraph: `input_guard` (stub), `route`, `calc`, retry loop on bad citations
+- [x] `tools/tax_calculator.py` + YAML rules + 25+ unit tests
 - [ ] Golden set v1: 100 questions (see [Evaluation](06-evaluation.md))
 - [ ] `eval/run_eval.py` + evaluators, with results stored as JSON
 - [ ] LangSmith dataset + experiments: chunk size, k, hybrid vs vector-only, query prefix
@@ -545,9 +545,10 @@ def compute_tax(inp: TaxInput) -> TaxResult:
                      breakdown=rows)
 ```
 
-Known gaps to list as issues: marginal relief near the rebate threshold, surcharge above ₹50 lakh,
-special-rate income (capital gains). The `calc` node uses `with_structured_output(TaxInput)`. If
-`gross_income` is missing, it asks the user instead of guessing.
+Known gaps to list as issues: surcharge above ₹50 lakh, special-rate income (capital gains).
+Marginal relief near the rebate threshold is implemented (`marginal_relief: true` in the YAML).
+The `calc` node uses structured output for `CalcExtraction` (`TaxInput` with an optional income).
+If `gross_income` is missing, it asks the user instead of guessing.
 
 ### Phoenix tracing
 
