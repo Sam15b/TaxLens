@@ -1,9 +1,12 @@
-# Values per Finance Act, 2025 — VERIFY against the official text before relying on them.
+# Income-tax rules for FY 2025-26 (AY 2026-27), individuals below 60, per the Finance Act, 2025.
+# Verified 2026-11-10: slabs, 87A rebates and the 4% cess against the Income Tax Department's
+# "tax slabs" help page (incometax.gov.in); the standard deductions (₹75,000 new regime as
+# restored by amendment, ₹50,000 old regime) against Budget 2025 coverage.
 tax_year: "2025-26"
 source: "Finance Act, 2025"
 cess_rate: 0.04
 regimes:
-  new:
+  new:                          # section 115BAC: deductions other than the standard one are not allowed
     standard_deduction_salaried: 75000
     slabs:                      # [upper bound (null = no limit), rate]
       - [400000, 0.00]
@@ -13,7 +16,9 @@ regimes:
       - [2000000, 0.20]
       - [2400000, 0.25]
       - [null, 0.30]
-    rebate: { max_taxable_income: 1200000, max_rebate: 60000 }
+    # 87A: full rebate up to ₹12 lakh; just above it, marginal relief caps the tax at the income
+    # above ₹12 lakh (tapers off at about ₹12,70,588).
+    rebate: { max_taxable_income: 1200000, max_rebate: 60000, marginal_relief: true }
   old:
     standard_deduction_salaried: 50000
     slabs:
@@ -21,5 +26,5 @@ regimes:
       - [500000, 0.05]
       - [1000000, 0.20]
       - [null, 0.30]
-    rebate: { max_taxable_income: 500000, max_rebate: 12500 }
+    rebate: { max_taxable_income: 500000, max_rebate: 12500, marginal_relief: false }
     deduction_caps: { "80C": 150000, "80D_self": 25000 }
