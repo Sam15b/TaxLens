@@ -358,15 +358,17 @@ are clean.
 
 ### Tasks
 
-> **Progress (2026-11-10):** Sprint 2 days 7–9 are done. The graph has its full shape (guards,
+> **Progress (2026-11-10):** Sprint 2 days 7–10 are done. The graph has its full shape (guards,
 > router, retry loop, NOT_FOUND exit, calc) and every path is tested. The FY 2025-26 rules were
 > checked against the Income Tax Department's slab table; 87A marginal relief is included.
 
 - [x] Full LangGraph: `input_guard` (stub), `route`, `calc`, retry loop on bad citations
 - [x] `tools/tax_calculator.py` + YAML rules + 25+ unit tests
-- [ ] Golden set v1: 100 questions (see [Evaluation](06-evaluation.md)). Part 1 is done: 55
-      source-verified questions (Act sections, old ↔ new mapping, circulars) and a validator
-- [ ] `eval/run_eval.py` + evaluators, with results stored as JSON
+- [x] Golden set v1: 100 questions (see [Evaluation](06-evaluation.md)), each checked against the
+      source text, with a validator and a 41-question CI subset
+- [x] `eval/run_eval.py` + evaluators, with results stored as JSON. The first baseline
+      (`eval/baseline.json`) is still to be recorded: a full run needs the API keys, and the
+      offline `--local-index --retrieval-only` run needs a few minutes of free memory
 - [ ] LangSmith dataset + experiments: chunk size, k, hybrid vs vector-only, query prefix
 - [ ] `observability/tracing.py`: Phoenix with LangChain + LlamaIndex instrumentation
 
