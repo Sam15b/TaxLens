@@ -70,3 +70,19 @@ def test_no_hits_skips_the_llm(monkeypatch: pytest.MonkeyPatch, store: FakeVecto
     wire_qa(monkeypatch, store, llm)
     out = ask("TDS on fees?", workspaces=["empty-workspace"])
     assert (out["answer"], out["citations"]) == (NOT_FOUND, []) and llm.prompts == []
+
+
+def test_masked_question_is_what_leaves_the_process(
+    monkeypatch: pytest.MonkeyPatch, store: FakeVectorStore
+) -> None:
+    llm = ScriptedChatModel(CITED)
+    wire_qa(monkeypatch, store, llm)
+    state = {
+        "question": "TDS on fees paid by ABCDE1234F?",
+        "masked_question": "TDS on fees paid by <IN_PAN_1>?",
+        "workspace_ids": ["public"],
+    }
+    out = build_graph().invoke(state)
+    assert out["cited"] == [1]
+    human = llm.prompts[0][1].content
+    assert "<IN_PAN_1>" in human and "ABCDE1234F" not in human

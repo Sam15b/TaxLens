@@ -55,8 +55,13 @@ def citation_for(ref: int, hit: SearchHit) -> Citation:
     )
 
 
+def _question(state: TaxLensState) -> str:
+    """What leaves this process: the masked question once the input guard has run."""
+    return state.get("masked_question") or state["question"]
+
+
 def retrieve(state: TaxLensState) -> dict[str, Any]:
-    question = state["question"]
+    question = _question(state)
     hits = get_store().hybrid_search(
         query_text=question,
         query_vector=get_query_vector(question),
@@ -68,21 +73,25 @@ def retrieve(state: TaxLensState) -> dict[str, Any]:
 
 
 def generate(state: TaxLensState) -> dict[str, Any]:
+    """One answer attempt. From the second attempt on, the prompt carries the retry hint."""
     attempts = state.get("attempts", 0) + 1
-    prompt = qa_user_message(state["question"], state["hits"], retry=attempts > 1)
+    prompt = qa_user_message(_question(state), state["hits"], retry=attempts > 1)
     reply = get_llm().invoke([SystemMessage(QA_SYSTEM), HumanMessage(prompt)])
     return {"answer": message_text(reply).strip(), "attempts": attempts}
 
 
 def check_citations(state: TaxLensState) -> dict[str, Any]:
+    """Sets ``cited`` (the validated source numbers) or ``error``; the graph retries on error."""
     hits = state["hits"]
     ok, refs = validate(state["answer"], len(hits))
     if not ok:
-        return {"citations": None, "error": "invalid citations"}
+        return {"cited": None, "citations": [], "error": "invalid citations"}
     if is_not_found(state["answer"]):
-        return {"answer": NOT_FOUND, "citations": [], "error": None}
-    return {"citations": [citation_for(r, hits[r - 1]) for r in refs], "error": None}
+        return {"answer": NOT_FOUND, "cited": [], "citations": [], "error": None}
+    citations = [citation_for(r, hits[r - 1]) for r in refs]
+    return {"cited": refs, "citations": citations, "error": None}
 
 
 def not_found(state: TaxLensState) -> dict[str, Any]:
-    return {"answer": NOT_FOUND, "citations": []}
+    """The exit when retrieval finds nothing or citations keep failing: no unsupported claims."""
+    return {"answer": NOT_FOUND, "cited": [], "citations": [], "error": None}

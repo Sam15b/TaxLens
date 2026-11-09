@@ -21,7 +21,7 @@ def _after_retrieve(s: TaxLensState) -> str:
 
 
 def _after_citations(s: TaxLensState) -> str:
-    if s.get("citations") is not None and not s.get("error"):
+    if s.get("cited") is not None and not s.get("error"):
         return "ok"
     return "retry" if s.get("attempts", 0) < MAX_ATTEMPTS else "fail"
 
