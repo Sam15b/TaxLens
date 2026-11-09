@@ -1,12 +1,37 @@
-# Golden-set ids in the fast CI subset (~40). See docs/06-evaluation.md.
+# Golden-set ids in the fast CI subset (~40 by day 10). See docs/06-evaluation.md.
+#
+# CI can only build its corpus from sources that download without a manual step (see `sources`
+# below). The Income-tax Act, 1961 and the CBDT circulars are hand-saved (`manual: true` in
+# data/sources.yaml), so questions that need them stay out of this subset.
 ci:
-  - q001
+  # act_section: Income-tax Act, 2025 and CGST Act
+  - q017
+  - q018
+  - q019
+  - q020
+  - q021
+  - q022
+  - q023
+  - q024
+  - q025
+  # act_mapping: each question names the subject, so the 2025 Act's section answers it
+  - q026
+  - q027
+  - q028
+  - q029
+  - q030
+  - q031
+  - q032
+  - q033
+  - q034
+  - q035
 
 # Source documents the CI corpus is built from (ids in data/sources.yaml). Only entries that
 # download without a manual step, so CI never depends on a hand-saved file.
 #   uv run python scripts/download_sources.py --subset ci --dest var/ci-raw
 sources:
   ci:
+    - ita-2025
     - cgst-act-2017
     - cgst-notif-13-2017-rate
     - cgst-notif-70-2019-ct

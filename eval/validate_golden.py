@@ -65,12 +65,49 @@ def check(
     return problems
 
 
+def check_subset_sources(
+    items: list[GoldenItem], subsets: dict[str, Any], entries: list[dict[str, Any]]
+) -> list[str]:
+    """Each named subset's corpus (``sources: {name: [...]}``) must download without a manual
+    step, and every answerable question in the subset must cite at least one source in it."""
+    problems = []
+    by_id = {e["id"]: e for e in entries}
+    by_item = {i.id: i for i in items}
+    for name, ids in (subsets.get("sources") or {}).items():
+        docs = [by_id[i] for i in ids or [] if i in by_id]
+        problems += [f"sources.{name}: unknown id {i!r}" for i in ids or [] if i not in by_id]
+        problems += [
+            f"sources.{name}: {d['id']} needs a manual download" for d in docs if d.get("manual")
+        ]
+        have = corpus_index_of(docs)
+        for qid in subsets.get(name) or []:
+            item = by_item.get(qid)
+            if item is None or not item.expected_sources:
+                continue
+            if not any(
+                all(v in have.get(k, {v}) for k, v in s.as_filter().items() if k != "section")
+                for s in item.expected_sources
+            ):
+                problems.append(f"subset {name}: {qid} cites no source in sources.{name}")
+    return problems
+
+
+def corpus_index_of(entries: list[dict[str, Any]]) -> dict[str, set[str]]:
+    return {
+        "act": {e["act"] for e in entries if e.get("act") and e.get("doc_type") == "act"},
+        "circular_no": {e["circular_no"] for e in entries if e.get("circular_no")},
+        "notification_no": {e["notification_no"] for e in entries if e.get("notification_no")},
+    }
+
+
 def validate(
     golden: Path = GOLDEN, sources: Path = SOURCES, subsets: Path = SUBSETS
 ) -> tuple[list[GoldenItem], list[str]]:
     items, problems = load_golden(golden)
     subset_map = yaml.safe_load(subsets.read_text(encoding="utf-8")) or {}
-    return items, problems + check(items, corpus_index(sources), subset_map)
+    entries = yaml.safe_load(sources.read_text(encoding="utf-8")) or []
+    problems += check(items, corpus_index(sources), subset_map)
+    return items, problems + check_subset_sources(items, subset_map, entries)
 
 
 def main() -> int:

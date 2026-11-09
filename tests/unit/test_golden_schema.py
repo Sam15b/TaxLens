@@ -102,3 +102,35 @@ def test_validate_reports_bad_json(tmp_path: Path) -> None:
     subsets.write_text("ci: [q001]\n", encoding="utf-8")
     items, problems = validate(golden=golden, subsets=subsets)
     assert len(items) == 1 and len(problems) == 1 and problems[0].startswith("line 2:")
+
+
+def test_ci_subset_needs_no_manual_source_and_covers_its_questions() -> None:
+    from eval.validate_golden import check_subset_sources
+
+    entries = [
+        {"id": "ita-2025", "doc_type": "act", "act": "Income-tax Act, 2025"},
+        {"id": "ita-1961", "doc_type": "act", "act": "Income-tax Act, 1961", "manual": True},
+        {
+            "id": "circ",
+            "doc_type": "circular",
+            "act": "Income-tax Act, 1961",
+            "circular_no": "3/2025",
+        },
+    ]
+    old = GoldenItem.model_validate(ROW)  # cites the 1961 Act
+    new = GoldenItem.model_validate(
+        {
+            **ROW,
+            "id": "q002",
+            "expected_sources": [{"act": "Income-tax Act, 2025", "section": "123"}],
+        }
+    )
+    subsets = {"ci": ["q001", "q002"], "sources": {"ci": ["ita-2025", "ita-1961", "nope"]}}
+    assert check_subset_sources([old, new], subsets, entries) == [
+        "sources.ci: unknown id 'nope'",
+        "sources.ci: ita-1961 needs a manual download",
+    ]  # q001 is covered by the (manual) 1961 Act here
+    subsets["sources"] = {"ci": ["ita-2025", "circ"]}
+    assert check_subset_sources([old, new], subsets, entries) == [
+        "subset ci: q001 cites no source in sources.ci"  # a circular's act field doesn't count
+    ]
