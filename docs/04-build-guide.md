@@ -17,8 +17,8 @@ The code is a **skeleton**: it shows the shape and the key calls. Fill in the de
 
 ### Tasks
 
-> **Progress (2026-11-09):** sprint days 1–5 are done. Ticked items are implemented; the rest
-> start on day 6.
+> **Progress (2026-11-09):** Sprint 1 (days 1–6) is done; see the [retro](retros/sprint-1.md). Ticked
+> items are implemented. The live demo waits for the API keys in `.env`.
 
 - [x] Scaffold the repo (doc 03), with `config.py`, `main.py` and `/health`
 - [x] `storage/models.py` + `Repository` protocol + `sqlite_repo.py` + first Alembic migration
@@ -31,9 +31,9 @@ The code is a **skeleton**: it shows the shape and the key calls. Fill in the de
 - [x] `ingestion/metadata.py`: regexes, plus unit tests on real snippets
 - [x] `ingestion/chunking.py`: section-aware chunking with a contextual header
 - [x] `llm/embeddings.py` + `retrieval/pinecone_store.py` (upsert, hybrid search, delete by id prefix)
-- [ ] `scripts/seed_index.py`: ingest `data/raw` synchronously
-- [ ] `llm/providers.py`: Gemini + Groq + Ollama
-- [ ] A minimal graph (retrieve → generate → check_citations) and `POST /ask` (no auth yet)
+- [x] `scripts/seed_index.py`: ingest `data/raw` synchronously
+- [x] `llm/providers.py`: Gemini + Groq + Ollama
+- [x] A minimal graph (retrieve → generate → check_citations) and `POST /ask` (no auth yet)
 
 ### Loading
 
